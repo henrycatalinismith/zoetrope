@@ -1,0 +1,17 @@
+{
+  "name": "@hendotcat/zoetrope",
+  "version": "0.0.0",
+  "author": {
+    "name": "Henry Catalini Smith",
+    "email": "hen@hey.com",
+    "url": "https://hen.cat/"
+  },
+  "dependencies": {
+    "chokidar": "^3.4.3",
+    "dotenv": "^8.2.0",
+    "fs-extra": "^9.0.1",
+    "html-minifier": "^4.0.0",
+    "jsdom": "^16.4.0",
+    "sass": "^1.27.0"
+  }
+}
