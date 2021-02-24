@@ -17,8 +17,6 @@ const files = _.get(package, "files", [])
 const mainPath = path.resolve(cwd, package.main)
 const mainBare = path.basename(mainPath, ".scss")
 
-console.log(mainPath)
-
 function compile() {
   const target = `${process.env.DIR}/_site/${mainBare}-${version}.css`
   const hrstart = process.hrtime()
@@ -44,22 +42,24 @@ module.exports = function(eleventyConfig) {
   setImmediate(function() {
     let initialized = false
     const Eleventy = require("@11ty/eleventy/src/Eleventy.js")
-    shimmer.wrap(Eleventy.prototype, "finish", function(orig) {
-      const watcher = chokidar.watch([mainPath], {
-        persistent: true
+    if (process.argv.includes("--serve")) {
+      shimmer.wrap(Eleventy.prototype, "finish", function(orig) {
+        const watcher = chokidar.watch([mainPath], {
+          persistent: true
+        })
+
+        const compileAndReload = eleventyInstance => () => {
+          compile()
+          eleventyInstance.eleventyServe.reload()
+        }
+
+        return function() {
+          watcher.on("add", compileAndReload(this))
+          watcher.on("change", compileAndReload(this))
+          return orig.apply(this);
+        };
       })
-
-      const compileAndReload = eleventyInstance => () => {
-        compile()
-        eleventyInstance.eleventyServe.reload()
-      }
-
-      return function() {
-        watcher.on("add", compileAndReload(this))
-        watcher.on("change", compileAndReload(this))
-        return orig.apply(this);
-      };
-    })
+    }
   })
 
   eleventyConfig.addTransform(
