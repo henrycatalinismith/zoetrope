@@ -9,4 +9,9 @@ jobs:
         with:
           node-version: 14
       - run: yarn
+      - uses: JS-DevTools/npm-publish@v1
+        with:
+          access: public
+          registry: https://registry.npmjs.org/
+          token: ${{ secrets.NPM_TOKEN }}
 
