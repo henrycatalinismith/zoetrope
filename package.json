@@ -1,5 +1,6 @@
 {
   "name": "@hendotcat/zoetrope",
+  "description": "Eleventy wrapper for CSS demos",
   "version": "0.0.0",
   "license": "MIT",
   "author": {
