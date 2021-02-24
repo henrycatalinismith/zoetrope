@@ -3,6 +3,7 @@ const fs = require("fs-extra")
 const htmlmin = require("html-minifier")
 const path = require("path")
 const sass = require("sass")
+const shimmer = require("shimmer")
 const _ = require("lodash")
 
 const package = fs.readJsonSync(
@@ -16,6 +17,8 @@ const files = _.get(package, "files", [])
 const mainPath = path.resolve(cwd, package.main)
 const mainBare = path.basename(mainPath, ".scss")
 
+console.log(mainPath)
+
 function compile() {
   const target = `${process.env.DIR}/_site/${mainBare}-${version}.css`
   const hrstart = process.hrtime()
@@ -24,15 +27,6 @@ function compile() {
   console.log(`✨ ${mainBare}.css ${Math.floor(hrend[1] / 1000000)}ms`)
   fs.ensureDirSync(`${process.env.DIR}/_site`)
   fs.writeFileSync(target, result.css)
-}
-
-function monkeypatch(cls, fn) {
-  const orig = cls.prototype[fn.name][`_PS_original`] || cls.prototype[fn.name]
-  function wrapped() {
-    return fn.bind(this, orig).apply(this, arguments)
-  }
-  wrapped[`_PS_original`] = orig
-  cls.prototype[fn.name] = wrapped
 }
 
 module.exports = function(eleventyConfig) {
@@ -50,24 +44,22 @@ module.exports = function(eleventyConfig) {
   setImmediate(function() {
     let initialized = false
     const Eleventy = require("@11ty/eleventy/src/Eleventy.js")
-    if (Eleventy.prototype) {
-      function watch(original) {
-        if (!initialized) {
-          const watcher = chokidar.watch([mainPath], {
-            persistent: true
-          })
-          const compileAndReload = eleventyInstance => () => {
-            compile()
-            this.eleventyServe.reload()
-          }
-          watcher.on("add", compileAndReload(this))
-          watcher.on("change", compileAndReload(this))
-          initialized = true
-        }
-        return original.apply(this)
+    shimmer.wrap(Eleventy.prototype, "finish", function(orig) {
+      const watcher = chokidar.watch([mainPath], {
+        persistent: true
+      })
+
+      const compileAndReload = eleventyInstance => () => {
+        compile()
+        eleventyInstance.eleventyServe.reload()
       }
-      monkeypatch(Eleventy, watch)
-    }
+
+      return function() {
+        watcher.on("add", compileAndReload(this))
+        watcher.on("change", compileAndReload(this))
+        return orig.apply(this);
+      };
+    })
   })
 
   eleventyConfig.addTransform(
