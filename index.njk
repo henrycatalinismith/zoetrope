@@ -330,7 +330,7 @@
 
       </article>
     </main>
- 
+
     <script>
       document.addEventListener(
         "DOMContentLoaded",
@@ -387,6 +387,12 @@
               }
             )
 
+          {% if autoplay %}
+            document.body.dataset.mode = "load"
+            request.open("GET", "{{ url }}/{{ name }}-{{ version }}.css")
+            request.send()
+          {% endif %}
+
         }
       )
     </script>
@@ -394,4 +400,4 @@
 
   </body>
 </html>
- 
+
