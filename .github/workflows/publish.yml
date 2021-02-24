@@ -1,6 +1,4 @@
 on: push
-  branches:
-    - trunk
 
 jobs:
   publish:
@@ -11,3 +9,4 @@ jobs:
         with:
           node-version: 14
       - run: yarn
+
