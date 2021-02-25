@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 require("child_process").fork(
-  `${__dirname}/node_modules/.bin/eleventy`,
+  `${process.cwd()}/node_modules/.bin/eleventy`,
   [
     // pass any extra arguments along to eleventy so we can use e.g. --serve
     ...process.argv.slice(2),
