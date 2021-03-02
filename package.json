@@ -1,7 +1,7 @@
 {
   "name": "@hendotcat/zoetrope",
   "description": "Eleventy wrapper for CSS demos",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "license": "MIT",
   "author": {
     "name": "Henry Catalini Smith",
