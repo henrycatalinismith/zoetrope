@@ -1,11 +1,11 @@
 const chokidar = require("chokidar")
-const createHtmlElement = require("create-html-element")
 const fs = require("fs-extra")
-const htmlmin = require("html-minifier")
 const path = require("path")
 const shimmer = require("shimmer")
 const _ = require("lodash")
 
+const eleventy = require("../lib/11ty")
+const html = require("../lib/html")
 const sass = require("../lib/sass")
 
 const package = fs.readJsonSync(
@@ -42,42 +42,27 @@ module.exports = function(eleventyConfig) {
     )
   )
 
-  setImmediate(function() {
-    const Eleventy = require("@11ty/eleventy/src/Eleventy.js")
-    if (process.argv.includes("--serve")) {
-      shimmer.wrap(Eleventy.prototype, "finish", function(orig) {
-        const watcher = chokidar.watch([mainPath], {
-          persistent: true
-        })
+  compile()
 
-        const compileAndReload = eleventyInstance => () => {
-          compile()
-          eleventyInstance.eleventyServe.reload()
-        }
-
-        return function() {
-          watcher.on("add", compileAndReload(this))
-          watcher.on("change", compileAndReload(this))
-          return orig.apply(this);
-        };
+  eleventyConfig.addPlugin(eleventy.lifecycle, {
+    finish: function(orig) {
+      const watcher = chokidar.watch([mainPath], {
+        persistent: true
       })
+
+      const compileAndReload = eleventyInstance => () => {
+        compile()
+        eleventyInstance.eleventyServe.reload()
+      }
+
+      return function() {
+        watcher.on("add", compileAndReload(this))
+        watcher.on("change", compileAndReload(this))
+        return orig.apply(this);
+      };
     }
   })
 
-  compile()
-
-  eleventyConfig.addTransform(
-    "htmlmin",
-    function(content, outputPath) {
-      if (outputPath && outputPath.endsWith(".html")) {
-        return htmlmin.minify(content, {
-          useShortDoctype: true,
-          removeComments: true,
-          collapseWhitespace: true
-        })
-      }
-      return content
-    }
-  )
+  eleventyConfig.addPlugin(eleventy.minify)
 }
 
