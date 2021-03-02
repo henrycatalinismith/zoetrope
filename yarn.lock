@@ -596,6 +596,11 @@ color-name@~1.1.4:
   resolved "https://registry.yarnpkg.com/color-name/-/color-name-1.1.4.tgz#c2a09a87acbde69543de6f63fa3995c826c536a2"
   integrity sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==
 
+colors-cli@^1.0.26:
+  version "1.0.27"
+  resolved "https://registry.yarnpkg.com/colors-cli/-/colors-cli-1.0.27.tgz#1a33f6cfc013cdb55e50bac0bff1a8f5f0866cf8"
+  integrity sha512-oyHDobdhzZDRHzVqOX+0owvXkS6recku25PUutP89BggJ3HikYTBpa7HZOoiAwhKFgHdyfJ+YNJyqxM4kBcEUg==
+
 combined-stream@^1.0.6, combined-stream@~1.0.6:
   version "1.0.8"
   resolved "https://registry.yarnpkg.com/combined-stream/-/combined-stream-1.0.8.tgz#c3d45a8b34fd730631a110a8a2520682b31d5a7f"
@@ -1733,6 +1738,13 @@ liquidjs@^6.4.3:
   version "6.4.3"
   resolved "https://registry.yarnpkg.com/liquidjs/-/liquidjs-6.4.3.tgz#c7caf7a3f6c87dc6a22a5a351328cf8f7298c243"
   integrity sha512-m1xSB10Ncu22NR3X0xdaqu/GvP1xadDCFYGqGgd6me8DAWjyA68BKE5DHJmSxw1CGsWPsX+Hj2v/87J2w/LvMQ==
+
+loading-cli@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/loading-cli/-/loading-cli-1.1.0.tgz#3457edaa3290439ad0061755174363a8091d56bc"
+  integrity sha512-r6Kj0Y3d3isT4vvJ0tFlND1CcLkpatWmlgQs/PEfnSofJSHZwAbsqexnpQEDj4nlxSXEqFWh/Wu2iQXAAZRPNQ==
+  dependencies:
+    colors-cli "^1.0.26"
 
 localtunnel@^2.0.1:
   version "2.0.1"
