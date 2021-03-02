@@ -382,14 +382,14 @@
               "click",
               () => {
                 document.body.dataset.mode = "load"
-                request.open("GET", "{{ url }}/{{ name }}-{{ version }}.css")
+                request.open("GET", "{{ url }}/{{ main | replace(".scss", "") }}-{{ version }}.css")
                 request.send()
               }
             )
 
           {% if autoplay %}
             document.body.dataset.mode = "load"
-            request.open("GET", "{{ url }}/{{ name }}-{{ version }}.css")
+            request.open("GET", "{{ url }}/{{ main | replace(".scss", "") }}-{{ version }}.css")
             request.send()
           {% endif %}
 
