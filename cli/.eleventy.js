@@ -13,6 +13,11 @@ const package = fs.readJsonSync(
   "utf-8"
 )
 
+const zoetrope = fs.readJsonSync(
+  `${__dirname}/../package.json`,
+  "utf-8"
+)
+
 const version = require("./_data/version")
 const cwd = process.env.DIR
 const files = _.get(package, "files", [])
@@ -24,9 +29,10 @@ function compile() {
     mainPath,
     `${process.env.DIR}/_site/${mainBare}-${version}.css`
   )
-)
+}
 
 module.exports = function(eleventyConfig) {
+  console.log(`zoetrope ${zoetrope.version}`)
   fs.emptyDirSync(`${process.env.DIR}/_site`)
 
   eleventyConfig.addPassthroughCopy(
