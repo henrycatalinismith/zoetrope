@@ -10,7 +10,7 @@ require("child_process").fork(
     `--output=${process.cwd()}/_site`,
   ],
   {
-    // run eleventy in the local zoetrope directory so that it builds the site
+    // run eleventy in the local bin directory so that it builds the site
     // primarily based on the stuff in here instead of the external directory
     cwd: __dirname,
 
