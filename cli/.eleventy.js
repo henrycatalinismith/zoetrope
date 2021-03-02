@@ -1,10 +1,10 @@
 const chokidar = require("chokidar")
 const fs = require("fs-extra")
 const path = require("path")
-const shimmer = require("shimmer")
 const _ = require("lodash")
 
 const eleventy = require("../lib/11ty")
+const demo = require("../lib/demo")
 const html = require("../lib/html")
 const sass = require("../lib/sass")
 
@@ -18,7 +18,7 @@ const zoetrope = fs.readJsonSync(
   "utf-8"
 )
 
-const version = require("./_data/version")
+const version = demo.version()
 const cwd = process.env.DIR
 const files = _.get(package, "files", [])
 const mainPath = path.resolve(cwd, package.main)
