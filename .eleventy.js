@@ -1,4 +1,5 @@
 const chokidar = require("chokidar")
+const createHtmlElement = require("create-html-element")
 const fs = require("fs-extra")
 const htmlmin = require("html-minifier")
 const path = require("path")
@@ -19,7 +20,28 @@ const mainBare = path.basename(mainPath, ".scss")
 
 const functions = {}
 
-functions['encode($str)'] = function(str) {
+functions['html($element, $props: (), $children: "")'] = function(element, props, children) {
+  const name = new sass.types.String(element.getValue()).getValue()
+
+  const attributes = {}
+  for (let i = 0; i < props.getLength(); i++) {
+    const key = new sass.types.String(props.getKey(i).getValue()).getValue()
+    const value = new sass.types.String(props.getValue(i).getValue()).getValue()
+    attributes[key] = value
+  }
+
+  const html = children.getValue()
+
+  return new sass.types.String(
+    createHtmlElement({
+      name,
+      attributes,
+      html,
+    })
+  )
+}
+
+functions['encode-uri($str)'] = function(str) {
   return new sass.types.String(encodeURIComponent(str))
 }
 
