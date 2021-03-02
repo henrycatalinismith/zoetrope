@@ -9,6 +9,7 @@ const package = fs.readJsonSync(
 const author = _.get(package, "author")
 const autoplay = process.argv.includes("--serve")
 const description = _.get(package, "description", "")
+const main = _.get(package, "main", "")
 const name = _.get(package, "name", "").replace(/^.+\//, "")
 const repository = _.get(package, "repository")
 
@@ -80,6 +81,7 @@ module.exports = {
   author,
   autoplay,
   description,
+  main,
   name,
   opengraph,
   repository,
