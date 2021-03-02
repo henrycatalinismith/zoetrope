@@ -17,10 +17,16 @@ const files = _.get(package, "files", [])
 const mainPath = path.resolve(cwd, package.main)
 const mainBare = path.basename(mainPath, ".scss")
 
+const functions = {}
+
+functions['encode($str)'] = function(str) {
+  return new sass.types.String(encodeURIComponent(str))
+}
+
 function compile() {
   const target = `${process.env.DIR}/_site/${mainBare}-${version}.css`
   const hrstart = process.hrtime()
-  const result = sass.renderSync({ file: mainPath })
+  const result = sass.renderSync({ file: mainPath, functions })
   const hrend = process.hrtime()
   console.log(`✨ ${mainBare}.css ${Math.floor(hrend[1] / 1000000)}ms`)
   fs.ensureDirSync(`${process.env.DIR}/_site`)
