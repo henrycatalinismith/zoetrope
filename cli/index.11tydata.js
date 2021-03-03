@@ -1,4 +1,4 @@
-const demo = require("../../lib/demo")
+const demo = require("../lib/demo")
 
 const autoplay = demo.autoplay()
 const metadata = demo.metadata(process.env.DIR)
