@@ -44,6 +44,12 @@ module.exports = function(eleventyConfig) {
 
   compile()
 
+  eleventyConfig.addPlugin(
+    eleventy.demo,
+    process.env.DIR
+  )
+
+
   eleventyConfig.addPlugin(eleventy.lifecycle, {
     watch: function(orig) {
       const watcher = chokidar.watch([mainPath], {
