@@ -44,26 +44,24 @@ module.exports = function(eleventyConfig) {
 
   compile()
 
-  if (process.argv.includes("--serve")) {
-    eleventyConfig.addPlugin(eleventy.lifecycle, {
-      finish: function(orig) {
-        const watcher = chokidar.watch([mainPath], {
-          persistent: true
-        })
+  eleventyConfig.addPlugin(eleventy.lifecycle, {
+    watch: function(orig) {
+      const watcher = chokidar.watch([mainPath], {
+        persistent: true
+      })
 
-        const compileAndReload = eleventyInstance => () => {
-          compile()
-          eleventyInstance.eleventyServe.reload()
-        }
-
-        return function() {
-          watcher.on("add", compileAndReload(this))
-          watcher.on("change", compileAndReload(this))
-          return orig.apply(this);
-        };
+      const compileAndReload = eleventyInstance => () => {
+        compile()
+        eleventyInstance.eleventyServe.reload()
       }
-    })
-  }
+
+      return function() {
+        watcher.on("add", compileAndReload(this))
+        watcher.on("change", compileAndReload(this))
+        return orig.apply(this);
+      };
+    }
+  })
 
   eleventyConfig.addPlugin(eleventy.minify)
 }
