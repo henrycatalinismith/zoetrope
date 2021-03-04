@@ -6,6 +6,7 @@ require("child_process").fork(
     // pass any extra arguments along to eleventy so we can use e.g. --serve
     ...process.argv.slice(2),
 
+
     // output the generated site to the external directory
     `--output=${process.cwd()}/_site`,
     "--config=eleventy.js",
@@ -23,6 +24,10 @@ require("child_process").fork(
       // can still reach back out to it to pull in extra content from there
       DIR: process.cwd(),
     },
+
+    execArgv: [
+      "--require=esm",
+    ],
   }
 )
 
