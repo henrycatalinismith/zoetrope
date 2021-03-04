@@ -1,10 +1,16 @@
-const demo = require("../lib/demo")
+const {
+  demoAutoplay,
+  demoMetadata,
+  demoOpengraph,
+  demoTwitter,
+  demoVersion,
+}= require("../lib/demo")
 
-const autoplay = demo.autoplay()
-const metadata = demo.metadata(process.env.DIR)
-const opengraph = demo.opengraph(metadata)
-const twitter = demo.twitter(metadata)
-const version = demo.version()
+const autoplay = demoAutoplay()
+const metadata = demoMetadata(process.env.DIR)
+const opengraph = demoOpengraph(metadata)
+const twitter = demoTwitter(metadata)
+const version = demoVersion()
 
 const url = process.env.COMMIT_REF
   ? metadata.homepage.replace(/\/$/, "")
