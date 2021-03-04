@@ -3,8 +3,10 @@ const fs = require("fs-extra")
 const path = require("path")
 const _ = require("lodash")
 
-const eleventy = require("../lib/11ty")
-const demo = require("../lib/demo")
+const {
+  demoPlugin,
+  minifyPlugin,
+}= require("../lib/11ty")
 
 const zoetrope = fs.readJsonSync(
   `${__dirname}/../package.json`,
@@ -15,10 +17,10 @@ module.exports = function(eleventyConfig) {
   console.log(`zoetrope ${zoetrope.version}`)
 
   eleventyConfig.addPlugin(
-    eleventy.demo,
+    demoPlugin,
     process.env.DIR
   )
 
-  eleventyConfig.addPlugin(eleventy.minify)
+  eleventyConfig.addPlugin(minifyPlugin)
 }
 
