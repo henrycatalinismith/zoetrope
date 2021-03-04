@@ -1,10 +1,10 @@
-const {
+import {
   demoAutoplay,
   demoMetadata,
   demoOpengraph,
   demoTwitter,
   demoVersion,
-}= require("../lib/demo")
+} from "../lib/demo"
 
 const autoplay = demoAutoplay()
 const metadata = demoMetadata(process.env.DIR)
@@ -16,7 +16,7 @@ const url = process.env.COMMIT_REF
   ? metadata.homepage.replace(/\/$/, "")
   : ""
 
-module.exports = {
+export default {
   autoplay,
   metadata,
   opengraph,

@@ -1,7 +1,7 @@
 {
   "name": "@hendotcat/zoetrope",
   "description": "Eleventy wrapper for CSS demos",
-  "version": "0.0.23",
+  "version": "0.0.24",
   "license": "MIT",
   "author": {
     "name": "Henry Catalini Smith",
@@ -16,6 +16,7 @@
     "chokidar": "^3.5.1",
     "create-html-element": "^3.0.0",
     "dotenv": "^8.2.0",
+    "esm": "^3.2.25",
     "fs-extra": "^9.1.0",
     "html-minifier": "^4.0.0",
     "jsdom": "^16.4.0",
