@@ -1,19 +1,19 @@
-const chokidar = require("chokidar")
-const fs = require("fs-extra")
-const path = require("path")
-const _ = require("lodash")
+import chokidar from "chokidar"
+import fs from "fs-extra"
+import path from "path"
+import _ from "lodash"
 
-const {
+import {
   demoPlugin,
   minifyPlugin,
-}= require("../lib/11ty")
+} from "../lib/11ty"
 
 const zoetrope = fs.readJsonSync(
   `${__dirname}/../package.json`,
   "utf-8"
 )
 
-module.exports = function(eleventyConfig) {
+export default function(eleventyConfig) {
   console.log(`zoetrope ${zoetrope.version}`)
 
   eleventyConfig.addPlugin(
