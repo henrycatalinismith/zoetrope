@@ -1,4 +1,4 @@
 [build]
   command = "yarn build"
-  publish = "docs/_site/"
+  publish = "_site/"
 
