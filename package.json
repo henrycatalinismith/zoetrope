@@ -1,7 +1,7 @@
 {
   "name": "@hendotcat/zoetrope",
   "description": "Eleventy wrapper for CSS demos",
-  "version": "0.0.25",
+  "version": "0.0.26",
   "license": "MIT",
   "author": {
     "name": "Henry Catalini Smith",
@@ -9,7 +9,7 @@
     "url": "https://hen.cat/"
   },
   "bin": {
-    "zoetrope": "./cli/zoetrope.js"
+    "zoetrope": "./zoetrope.js"
   },
   "dependencies": {
     "@11ty/eleventy": "^0.11.1",
@@ -26,6 +26,6 @@
     "shimmer": "^1.2.1"
   },
   "scripts": {
-    "build": "eleventy --input=docs --output=docs/_site"
+    "build": "eleventy --input=site.njk"
   }
 }

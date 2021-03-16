@@ -9,7 +9,8 @@ require("child_process").fork(
 
     // output the generated site to the external directory
     `--output=${process.cwd()}/_site`,
-    "--config=eleventy.js",
+    "--config=demo.11ty.js",
+    "--input=demo.njk",
   ],
   {
     // run eleventy in the local bin directory so that it builds the site

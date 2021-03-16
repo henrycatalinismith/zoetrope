@@ -1,3 +1,6 @@
+---
+permalink: /
+---
 <!doctype html>
 <html
   lang="en"
@@ -25,7 +28,7 @@
     {% endfor %}
 
     <style>
-      {% include "demo.css" %}
+      {% include "demo.runner.css" %}
     </style>
     <title>
       {{ metadata.name }}
@@ -81,7 +84,7 @@
     </main>
 
     <script>
-      {% include "demo.js" %}
+      {% include "demo.runner.js" %}
     </script>
   </body>
 </html>
