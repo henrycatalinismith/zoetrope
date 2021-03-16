@@ -29,6 +29,10 @@
   --loadingBarWidth: var(--playButtonWidth);
 }
 
+body[data-mode="error"] {
+  --backgroundColor: red;
+}
+
 body[data-mode="menu"] {
   --playButtonDisplay: flex;
 }
