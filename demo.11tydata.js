@@ -4,7 +4,7 @@ import {
   demoOpengraph,
   demoTwitter,
   demoVersion,
-} from "../lib/demo"
+} from "./demo.11ty.js"
 
 const autoplay = demoAutoplay()
 const metadata = demoMetadata(process.env.DIR)
@@ -24,4 +24,3 @@ export default {
   twitter,
   url,
 }
-
