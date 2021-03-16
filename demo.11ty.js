@@ -1,7 +1,13 @@
+import Eleventy from "@11ty/eleventy/src/Eleventy.js"
+import chokidar from "chokidar"
+import createHtmlElement from "create-html-element"
 import fs from "fs-extra"
 import htmlmin from "html-minifier"
+import loading from "loading-cli"
 import _ from "lodash"
 import path from "path"
+import sass from "sass"
+import shimmer from "shimmer"
 
 export function demoAutoplay() {
   return process.argv.includes("--serve")
@@ -135,6 +141,108 @@ export function demoVersion() {
   return process.env.COMMIT_REF || "dev"
 }
 
+function unquote(value) {
+  if (value instanceof sass.types.Number) {
+    return value.getValue()
+  }
+  return new sass.types.String(
+    value.getValue()
+  ).getValue()
+}
+
+function html(tagName, props, children) {
+  const name = unquote(tagName)
+  const attributes = {}
+  for (let i = 0; i < props.getLength(); i++) {
+    const key = unquote(props.getKey(i))
+    const value = unquote(props.getValue(i))
+    attributes[key] = value
+  }
+  const html = children.getValue()
+  return new sass.types.String(
+    createHtmlElement({
+      name,
+      attributes,
+      html,
+    })
+  )
+}
+
+function implode(pieces, glue) {
+  const array = []
+  for (let i = 0; i < pieces.getLength(); i++) {
+    array.push(unquote(pieces.getValue(i)))
+  }
+  const output = array.join(unquote(glue))
+  return new sass.types.String(output)
+}
+
+function svg(x, y, w, h, children) {
+  const tagName = new sass.types.String("svg")
+  const props = new sass.types.Map(3)
+
+  props.setKey(0, new sass.types.String("xmlns"))
+  props.setValue(0, new sass.types.String("http://www.w3.org/2000/svg"))
+
+  props.setKey(1, new sass.types.String("xmlns:xlink"))
+  props.setValue(1, new sass.types.String("http://www.w3.org/1999/xlink"))
+
+  props.setKey(2, new sass.types.String("viewBox"))
+  props.setValue(2, new sass.types.String([
+    x.getValue(),
+    y.getValue(),
+    w.getValue(),
+    h.getValue(),
+  ].join(" ")))
+
+  const dirty = html(tagName, props, children)
+  const clean = encodeURIComponent(dirty)
+  const url = new sass.types.String(`url("data:image/svg+xml;utf8,${clean}")`)
+
+  return url
+}
+
+const functions = {
+  "html($tagName, $props: (), $children: '')": html,
+  "implode($pieces, $glue: '')": implode,
+  "svg($x, $y, $w, $h, $children: '')": svg,
+}
+
+export async function compileSass(src, dst) {
+  const file = path.resolve(src)
+  const name = path.basename(src)
+  const dir = path.dirname(dst)
+  const start = process.hrtime()
+  const load = loading(name).start()
+  load.render()
+
+  const interval = setInterval(() => {
+    load.render()
+  }, 100)
+
+  return new Promise((resolve, reject) => {
+    const result = sass.render(
+      { file, functions },
+      (err, result) => {
+        clearInterval(interval)
+        if (err) {
+          console.error(err)
+          load.fail()
+          reject()
+        } else {
+          fs.ensureDirSync(dir)
+          fs.writeFileSync(dst, result.css)
+          const end = process.hrtime(start)
+          const nanoseconds = end[0] * 1e9 + end[1]
+          const milliseconds = Math.ceil(nanoseconds / 1e6)
+          load.succeed(`${name} [${milliseconds}ms]`)
+          resolve()
+        }
+      }
+    )
+  })
+}
+
 export function minifyHtml(html) {
   return htmlmin.minify(html, {
     useShortDoctype: true,
@@ -146,6 +254,65 @@ export function minifyHtml(html) {
 export const demoPlugin = {
   initArguments: {},
   configFunction: function(eleventyConfig, directory) {
+    const metadata = demoMetadata(directory)
+    const version = demoVersion()
+    const build = demoBuild(directory, metadata, version)
+
+    const passthroughCopy = _.zipObject(
+      metadata.files.map(f => `${build.demoDirectory}/${f}`),
+      metadata.files
+    )
+
+    function compile() {
+      compileSass(
+        build.scssFilename,
+        build.cssFilename
+      )
+    }
+
+    fs.emptyDirSync(build.siteDirectory)
+
+    eleventyConfig.addPassthroughCopy(
+      passthroughCopy
+    )
+
+    compile()
+
+    if (process.argv.includes("--serve")) {
+      eleventyConfig.addPlugin(lifecyclePlugin, {
+        finish: function(orig) {
+          const watcher = chokidar.watch([build.scssFilename], {
+            persistent: true
+          })
+
+          const compileAndReload = eleventyInstance => () => {
+            compile()
+            eleventyInstance.eleventyServe.reload()
+          }
+
+          return function() {
+            watcher.on("add", compileAndReload(this))
+            watcher.on("change", compileAndReload(this))
+            return orig.apply(this)
+          }
+        },
+      })
+    }
+  }
+}
+
+export const lifecyclePlugin = {
+  initArguments: {},
+  configFunction: function(eleventyConfig, options) {
+    setImmediate(function() {
+      for (const key in options) {
+        shimmer.wrap(
+          Eleventy.prototype,
+          key,
+          options[key]
+        )
+      }
+    })
   }
 }
 
@@ -172,22 +339,11 @@ const zoetrope = fs.readJsonSync(
 export default function(eleventyConfig) {
   console.log(`zoetrope ${zoetrope.version}`)
 
-  const metadata = demoMetadata(process.env.DIR)
-  const version = demoVersion()
-  const build = demoBuild(process.env.DIR, metadata, version)
-
-  const passthroughCopy = _.zipObject(
-    metadata.files.map(f => `${build.demoDirectory}/${f}`),
-    metadata.files
-  )
-
-  fs.emptyDirSync(build.siteDirectory)
-
-  eleventyConfig.addPassthroughCopy(
-    passthroughCopy
+  eleventyConfig.addPlugin(
+    demoPlugin,
+    process.env.DIR
   )
 
   eleventyConfig.addPlugin(minifyPlugin)
-  eleventyConfig.addWatchTarget(build.scssFilename)
 }
 
