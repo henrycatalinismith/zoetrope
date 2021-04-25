@@ -1,11 +1,12 @@
 import Eleventy from "@11ty/eleventy/src/Eleventy.js"
+import rehype from "@hendotcat/11tyhype"
 import chokidar from "chokidar"
 import createHtmlElement from "create-html-element"
 import fs from "fs-extra"
-import htmlmin from "html-minifier"
 import loading from "loading-cli"
 import _ from "lodash"
 import path from "path"
+import rehypeMinifyWhitespace from "rehype-minify-whitespace"
 import sass from "sass"
 import shimmer from "shimmer"
 
@@ -243,14 +244,6 @@ export async function compileSass(src, dst) {
   })
 }
 
-export function minifyHtml(html) {
-  return htmlmin.minify(html, {
-    useShortDoctype: true,
-    removeComments: true,
-    collapseWhitespace: true
-  })
-}
-
 export const demoPlugin = {
   initArguments: {},
   configFunction: function(eleventyConfig, directory) {
@@ -316,21 +309,6 @@ export const lifecyclePlugin = {
   }
 }
 
-export const minifyPlugin = {
-  initArguments: {},
-  configFunction: function(eleventyConfig, options) {
-    eleventyConfig.addTransform(
-      "htmlmin",
-      function(content, outputPath) {
-        if (outputPath && outputPath.endsWith(".html")) {
-          return minifyHtml(content)
-        }
-        return content
-      }
-    )
-  }
-}
-
 const zoetrope = fs.readJsonSync(
   `${__dirname}/package.json`,
   "utf-8"
@@ -344,6 +322,11 @@ export default function(eleventyConfig) {
     process.env.DIR
   )
 
-  eleventyConfig.addPlugin(minifyPlugin)
+  eleventyConfig.addPlugin(rehype, {
+    plugins: [
+      [rehypeMinifyWhitespace],
+    ]
+  })
+
 }
 
