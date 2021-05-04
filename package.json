@@ -1,7 +1,7 @@
 {
   "name": "@hendotcat/zoetrope",
   "description": "Eleventy wrapper for CSS demos",
-  "version": "0.0.30",
+  "version": "0.0.31",
   "license": "MIT",
   "author": {
     "name": "Henry Catalini Smith",
@@ -12,7 +12,7 @@
     "zoetrope": "./zoetrope.js"
   },
   "dependencies": {
-    "@11ty/eleventy": "^0.11.1",
+    "@11ty/eleventy": "^0.12.1",
     "@hendotcat/11tyhype": "^0.0.5",
     "chokidar": "^3.5.1",
     "create-html-element": "^3.0.0",
@@ -22,14 +22,12 @@
     "jsdom": "^16.4.0",
     "loading-cli": "^1.1.0",
     "lodash": "^4.17.21",
+    "rehype": "^11.0.0",
+    "rehype-minify-whitespace": "^4.0.5",
     "sass": "^1.32.8",
     "shimmer": "^1.2.1"
   },
   "scripts": {
     "build": "eleventy --input=site.njk"
-  },
-  "devDependencies": {
-    "rehype": "^11.0.0",
-    "rehype-minify-whitespace": "^4.0.5"
   }
 }
