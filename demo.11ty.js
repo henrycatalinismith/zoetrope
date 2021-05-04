@@ -1,5 +1,5 @@
 import Eleventy from "@11ty/eleventy/src/Eleventy.js"
-import rehype from "@hendotcat/11tyhype"
+import { rehypePlugin } from "@hendotcat/11tyhype"
 import chokidar from "chokidar"
 import createHtmlElement from "create-html-element"
 import fs from "fs-extra"
@@ -322,7 +322,7 @@ export default function(eleventyConfig) {
     process.env.DIR
   )
 
-  eleventyConfig.addPlugin(rehype, {
+  eleventyConfig.addPlugin(rehypePlugin, {
     plugins: [
       [rehypeMinifyWhitespace],
     ]

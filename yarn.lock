@@ -45,10 +45,10 @@
     time-require "^0.1.2"
     valid-url "^1.0.9"
 
-"@hendotcat/11tyhype@^0.0.1":
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/@hendotcat/11tyhype/-/11tyhype-0.0.1.tgz#617e02329cc0fa91db1e1b5eea75e2e924c36836"
-  integrity sha512-YwBBns4W3lO02P8JOrESifd0bOM3ErD3g7bOemLqJijwBs1IMfnkM7Ajjzat3zRlNx+O9N1i9nhp5xBtO+YIAQ==
+"@hendotcat/11tyhype@^0.0.5":
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/@hendotcat/11tyhype/-/11tyhype-0.0.5.tgz#3833333eec81c49549d01a359e40c1d1c7fca0fc"
+  integrity sha512-KI5SI91Kdp3gIOeugwP0Fn8SF+jyZmKHnp2eb+h/0fXyy700NGQqQI1YPnWWSxX2dORp4Kf3t6sre/BDaXNEvA==
   dependencies:
     eazy-logger "3.1.0"
 
