@@ -29,5 +29,9 @@
   },
   "scripts": {
     "build": "eleventy --input=site.njk"
+  },
+  "devDependencies": {
+    "@types/node": "^15.0.2",
+    "typescript": "^4.2.4"
   }
 }
