@@ -884,6 +884,7 @@ function buildSass(): Thunk {
             css: result.css.toString(),
             map: result.map?.toString(),
           }
+          fs.ensureDirSync("_site")
           fs.writeFileSync(`_site/style.css`, sassResult.css)
           await dispatch(sass.actions.result(sassResult))
           await dispatch(buildPage())
