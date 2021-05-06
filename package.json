@@ -15,6 +15,7 @@
     "@11ty/eleventy": "^0.12.1",
     "@hendotcat/11tyhype": "^0.0.5",
     "@reduxjs/toolkit": "^1.5.1",
+    "@types/react-dom": "^17.0.3",
     "chokidar": "^3.5.1",
     "create-html-element": "^3.0.0",
     "dotenv": "^8.2.0",
@@ -25,6 +26,7 @@
     "loading-cli": "^1.1.0",
     "lodash": "^4.17.21",
     "react": "^17.0.2",
+    "react-dom": "^17.0.2",
     "react-redux": "^7.2.4",
     "rehype": "^11.0.0",
     "rehype-minify-whitespace": "^4.0.5",
@@ -35,7 +37,10 @@
     "build": "tsc && chmod +x zoetrope.js"
   },
   "devDependencies": {
+    "@types/browser-sync": "^2.26.1",
+    "@types/fs-extra": "^9.0.11",
     "@types/node": "^15.0.2",
+    "@types/sass": "^1.16.0",
     "typescript": "^4.2.4"
   }
 }
