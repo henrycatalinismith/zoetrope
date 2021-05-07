@@ -251,6 +251,28 @@ const server = createSlice({
   },
 })
 
+interface Terminal {
+  height: number
+  width: number
+}
+
+const initialTerminalState: Terminal = {
+  height: process.stdout.rows,
+  width: process.stdout.columns,
+}
+
+const terminal = createSlice({
+  name: "terminal",
+  initialState: initialTerminalState,
+  reducers: {
+    resize: (state, action: PayloadAction<[number, number]>): void => {
+      const [ width, height ] = action.payload
+      state.height = height
+      state.width = width
+    },
+  },
+})
+
 const store = configureStore({
   reducer: {
     command: command.reducer,
@@ -258,6 +280,7 @@ const store = configureStore({
     metadata: metadata.reducer,
     sass: sass.reducer,
     server: server.reducer,
+    terminal: terminal.reducer,
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware()
   .concat(store => next => async action => {
@@ -276,6 +299,7 @@ export type Thunk = ThunkAction<void, RootState, null, Action<string>>
 
 const selectMetadata = ({ metadata }): Metadata => metadata
 const selectSass = ({ sass }): Sass => sass
+const selectTerminal = ({ terminal }): Terminal => terminal
 
 const selectMetadataMain = createSelector(
   [selectMetadata],
@@ -304,6 +328,16 @@ const selectSassHash = createSelector(
 const selectCssFilename = createSelector(
   [selectMetadataName, selectSassHash],
   (name, hash) => `${name}-${hash}.css`
+)
+
+const selectTerminalHeight = createSelector(
+  [selectTerminal],
+  (terminal) => terminal.height,
+)
+
+const selectTerminalWidth = createSelector(
+  [selectTerminal],
+  (terminal) => terminal.width,
 )
 
 function Zoetrope(): React.ReactElement {
@@ -400,12 +434,10 @@ function Build(): React.ReactElement {
 }
 
 function Server(): React.ReactElement {
+  const height = useAppSelector(selectTerminalHeight)
+  const width = useAppSelector(selectTerminalWidth)
   return (
-    <Box
-      flexDirection="row"
-      height={process.stdout.rows}
-      width={process.stdout.columns}
-    >
+    <Box flexDirection="row" height={height} width={width}>
       <ServerStatus />
       <ServerLogs />
     </Box>
@@ -416,7 +448,7 @@ function ServerStatus(): React.ReactElement {
   const metadata = useAppSelector(state => state.metadata)
   const name = useAppSelector(selectMetadataName)
   return (
-    <Box 
+    <Box
       borderColor="magenta"
       borderStyle="round"
       flexDirection="column"
@@ -438,10 +470,10 @@ function ServerStatus(): React.ReactElement {
 
 function ServerLogs(): React.ReactElement {
   const lines = useAppSelector(state => state.log)
-  const height = process.stdout.rows - 2
+  const height = useAppSelector(selectTerminalHeight) - 2
 
   return (
-    <Box 
+    <Box
       borderColor="magenta"
       borderStyle="round"
       flexDirection="column"
@@ -769,7 +801,7 @@ function Page(): React.ReactElement {
         </main>
         <script dangerouslySetInnerHTML={{
           __html: `
-              
+
           document.addEventListener(
             "DOMContentLoaded",
             () => {
@@ -778,11 +810,11 @@ function Page(): React.ReactElement {
               const style = document.createElement("style")
               const loading = document.querySelector("[aria-label='loading'] path")
               let before = Date.now()
-          
+
               request.onloadstart = () => {
                 before = Date.now()
               }
-          
+
               request.onprogress = (event) => {
                 const after = Date.now()
                 document.documentElement.style.setProperty(
@@ -794,7 +826,7 @@ function Page(): React.ReactElement {
                 )
                 before = after
               }
-          
+
               request.onload = () => {
                 loading.style.strokeDashoffset = 0
                 setTimeout(() => {
@@ -811,7 +843,7 @@ function Page(): React.ReactElement {
                   }, Math.pow(2, 8))
                 }, Math.pow(2, 8))
               }
-          
+
               document
                 .querySelector("[aria-label='play']")
                 .addEventListener(
@@ -822,7 +854,7 @@ function Page(): React.ReactElement {
                     request.send()
                   }
                 )
-          
+
               // {% if autoplay %}
                 // document.body.dataset.mode = "load"
                 // request.open("GET", "{{ url }}/{{ metadata.main | replace(".scss", "") }}-{{ version }}.css")
@@ -869,6 +901,13 @@ function runServer(): Thunk {
     })
     await dispatch(runBuild())
     await dispatch(watchSass())
+
+    process.stdout.on("resize", () => {
+      dispatch(terminal.actions.resize([
+        process.stdout.columns,
+        process.stdout.rows,
+      ]))
+    })
   }
 }
 
@@ -876,7 +915,7 @@ function buildPage(): Thunk {
   return async (dispatch, getState) => {
     fs.ensureDirSync("_site")
     dispatch(page.actions.build())
-    
+
     let html = ReactDOMServer.renderToString(
       <Provider store={store}>
         <Page />
