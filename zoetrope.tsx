@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import browserSync from "browser-sync"
+import chokidar from "chokidar"
 import createHtmlElement from "create-html-element"
+import crypto from "crypto"
 import fs from "fs-extra"
 import {
   Action,
@@ -275,14 +277,33 @@ export type Thunk = ThunkAction<void, RootState, null, Action<string>>
 const selectMetadata = ({ metadata }): Metadata => metadata
 const selectSass = ({ sass }): Sass => sass
 
-const selectMain = createSelector(
+const selectMetadataMain = createSelector(
   [selectMetadata],
   (metadata) => metadata.main
+)
+
+const selectMetadataName = createSelector(
+  [selectMetadata],
+  (metadata) => metadata.name.replace(/^.+\//, "")
 )
 
 const selectSassCode = createSelector(
   [selectSass],
   (sass) => sass.code
+)
+
+const selectSassHash = createSelector(
+  [selectSassCode],
+  (code) => crypto
+    .createHash("md5")
+    .update(code)
+    .digest("hex")
+    .slice(0, 8)
+)
+
+const selectCssFilename = createSelector(
+  [selectMetadataName, selectSassHash],
+  (name, hash) => `${name}-${hash}.css`
 )
 
 function Zoetrope(): React.ReactElement {
@@ -393,6 +414,7 @@ function Server(): React.ReactElement {
 
 function ServerStatus(): React.ReactElement {
   const metadata = useAppSelector(state => state.metadata)
+  const name = useAppSelector(selectMetadataName)
   return (
     <Box 
       borderColor="magenta"
@@ -404,7 +426,7 @@ function ServerStatus(): React.ReactElement {
     >
       <Text color="magenta">zoetrope</Text>
       <Box paddingLeft={1} paddingRight={1} flexDirection="column">
-        <Text>{metadata.name}</Text>
+        <Text>{name}</Text>
         <Text>{metadata.homepage}</Text>
       </Box>
       <Box paddingLeft={1} paddingRight={1} flexDirection="column">
@@ -416,15 +438,18 @@ function ServerStatus(): React.ReactElement {
 
 function ServerLogs(): React.ReactElement {
   const lines = useAppSelector(state => state.log)
+  const height = process.stdout.rows - 2
+
   return (
     <Box 
       borderColor="magenta"
       borderStyle="round"
       flexDirection="column"
-      padding={1}
+      paddingLeft={1}
+      paddingRight={1}
       width="50%"
     >
-      {lines.map((line, i) => (
+      {lines.slice(0 - height).map((line, i) => (
         <Text key={i}>{line}</Text>
       ))}
     </Box>
@@ -433,6 +458,8 @@ function ServerLogs(): React.ReactElement {
 
 function Page(): React.ReactElement {
   const metadata = useAppSelector(selectMetadata)
+  const name = useAppSelector(selectMetadataName)
+  const cssFilename = useAppSelector(selectCssFilename)
   return (
     <html
       lang="en"
@@ -706,7 +733,7 @@ function Page(): React.ReactElement {
           <article>
             <header>
               <h1 itemProp="name">
-              {metadata.name}
+              {name}
               </h1>
             </header>
             <p itemProp="description">
@@ -791,7 +818,7 @@ function Page(): React.ReactElement {
                   "click",
                   () => {
                     document.body.dataset.mode = "load"
-                    request.open("GET", "style.css")
+                    request.open("GET", "${cssFilename}")
                     request.send()
                   }
                 )
@@ -828,6 +855,7 @@ function runBuild(): Thunk {
   return async (dispatch, getState) => {
     await dispatch(updateSass())
     await dispatch(buildSass())
+    await dispatch(buildPage())
   }
 }
 
@@ -840,6 +868,7 @@ function runServer(): Thunk {
       dispatch(server.actions.online())
     })
     await dispatch(runBuild())
+    await dispatch(watchSass())
   }
 }
 
@@ -863,7 +892,7 @@ function buildPage(): Thunk {
 
 function updateSass(): Thunk {
   return async (dispatch, getState) => {
-    const main = selectMain(getState())
+    const main = selectMetadataMain(getState())
     const data = fs.readFileSync(main, "utf-8")
     await dispatch(sass.actions.update(data))
   }
@@ -871,26 +900,43 @@ function updateSass(): Thunk {
 
 function buildSass(): Thunk {
   return async (dispatch, getState) => {
-    const data = selectSassCode(getState())
-    dispatch(sass.actions.build())
-    renderSass(
-      { data, functions },
-      async (err, result) => {
-        if (err) {
-          dispatch(sass.actions.error(err.stack))
-        } else {
-          const sassResult: SassResult = {
-            ...result,
-            css: result.css.toString(),
-            map: result.map?.toString(),
+    return new Promise((resolve, reject) => {
+      const data = selectSassCode(getState())
+      dispatch(sass.actions.build())
+      renderSass(
+        { data, functions },
+        async (err, result) => {
+          if (err) {
+            dispatch(sass.actions.error(err.stack))
+            reject()
+          } else {
+            const sassResult: SassResult = {
+              ...result,
+              css: result.css.toString(),
+              map: result.map?.toString(),
+            }
+            await dispatch(sass.actions.result(sassResult))
+            const cssFilename = selectCssFilename(getState())
+            const cssPath = `_site/${cssFilename}`
+            fs.ensureDirSync("_site")
+            fs.writeFileSync(cssPath, sassResult.css)
+            resolve(null)
           }
-          fs.ensureDirSync("_site")
-          fs.writeFileSync(`_site/style.css`, sassResult.css)
-          await dispatch(sass.actions.result(sassResult))
-          await dispatch(buildPage())
         }
-      }
-    )
+      )
+    })
+  }
+}
+
+function watchSass(): Thunk {
+  return async (dispatch, getState) => {
+    const main = selectMetadataMain(getState())
+    const watcher = chokidar.watch([main], {
+      persistent: true
+    })
+    watcher.on("change", async () => {
+      await dispatch(runBuild())
+    })
   }
 }
 
