@@ -308,6 +308,7 @@ const useAppDispatch = () => useDispatch<AppDispatch>()
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
 export type Thunk = ThunkAction<void, RootState, null, Action<string>>
 
+const selectCommand = ({ command }): Command => command
 const selectMetadata = ({ metadata }): Metadata => metadata
 const selectSass = ({ sass }): Sass => sass
 const selectTerminal = ({ terminal }): Terminal => terminal
@@ -632,12 +633,18 @@ function ServerLogs(): React.ReactElement {
 function Page(): React.ReactElement {
   const authorName = useAppSelector(selectMetadataAuthorName)
   const authorUrl = useAppSelector(selectMetadataAuthorUrl)
-  const cssFilename = useAppSelector(selectCssFilename)
+  const command = useAppSelector(selectCommand)
   const description = useAppSelector(selectMetadataDescription)
+  const homepage = useAppSelector(selectMetadataHomepage)
   const name = useAppSelector(selectMetadataName)
   const opengraph = useAppSelector(selectOpengraphTags)
   const repositoryUrl = useAppSelector(selectMetadataRepositoryUrl)
   const twitter = useAppSelector(selectTwitterTags)
+
+  let cssFilename = useAppSelector(selectCssFilename)
+  if (command === "build") {
+    cssFilename = `${homepage.replace(/\/$/, "")}/${cssFilename}`
+  }
 
   return (
     <html
