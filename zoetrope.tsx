@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import _ from "lodash"
 import browserSync from "browser-sync"
 import chokidar from "chokidar"
 import createHtmlElement from "create-html-element"
@@ -20,7 +21,7 @@ import {
   useDispatch,
   useSelector,
 } from "react-redux/lib/alternate-renderers"
-import { render, Box, Text, Newline } from "ink"
+import { render, Box, Text, Newline, useApp } from "ink"
 import { render as renderSass, types as sassTypes } from "sass"
 import { name, description, version } from "./package.json"
 
@@ -121,6 +122,16 @@ interface Metadata {
   name?: string
   description?: string
   main?: string
+  homepage?: string
+  author?: {
+    name?: string
+    email?: string
+    url?: string
+  }
+  files?: string[]
+  repository?: {
+    url?: string
+  }
 }
 
 const metadata = createSlice({
@@ -311,6 +322,118 @@ const selectMetadataName = createSelector(
   (metadata) => metadata.name.replace(/^.+\//, "")
 )
 
+const selectMetadataAuthorEmail = createSelector(
+  [selectMetadata],
+  (metadata) => metadata.author?.email || ""
+)
+
+const selectMetadataAuthorName = createSelector(
+  [selectMetadata],
+  (metadata) => metadata.author?.name || ""
+)
+
+const selectMetadataAuthorUrl = createSelector(
+  [selectMetadata],
+  (metadata) => metadata.author?.url || ""
+)
+
+const selectMetadataDescription = createSelector(
+  [selectMetadata],
+  (metadata) => metadata.description || ""
+)
+
+const selectMetadataFiles = createSelector(
+  [selectMetadata],
+  (metadata) => metadata.files || []
+)
+
+const selectMetadataHomepage = createSelector(
+  [selectMetadata],
+  (metadata) => metadata.homepage || ""
+)
+
+const selectMetadataRepositoryUrl = createSelector(
+  [selectMetadata],
+  (metadata) => metadata.repository?.url || ""
+)
+
+const selectOpengraphImage = createSelector(
+  [selectMetadataFiles],
+  (files) => _.find(files, f => f.match(/opengraph/))
+)
+
+const selectOpengraphTags = createSelector(
+  [
+    selectMetadataName,
+    selectMetadataHomepage,
+    selectMetadataDescription,
+    selectOpengraphImage,
+  ],
+  (name, url, description, image) => {
+    const opengraph = []
+
+    opengraph.push({
+      property: "og:title",
+      content: name,
+    })
+
+    opengraph.push({
+      property: "og:url",
+      content: url,
+    })
+
+    opengraph.push({
+      property: "og:description",
+      content: description,
+    })
+    
+    if (image) {
+      opengraph.push({
+        property: "og:image",
+        content: `${url.replace(/\/$/, "")}/${image}`,
+      })
+  
+      opengraph.push({
+        property: "og:image:alt",
+        content: description,
+      })
+  
+      opengraph.push({
+        property: "og:image:height",
+        content: 630,
+      })
+  
+      opengraph.push({
+        property: "og:image:height",
+        content: 1200,
+      })
+    }
+    
+    return opengraph
+  }
+)
+
+const selectTwitterTags = createSelector(
+  [
+    selectMetadataName,
+    selectMetadataDescription,
+  ],
+  (name, description) => [
+    {
+      name: "twitter:card",
+      content: "summary_large_image",
+    },
+    {
+      name: "twitter:text:title",
+      content: name,
+    },
+    {
+      name: "twitter:description",
+      content: description,
+    },
+  ]
+)
+
 const selectSassCode = createSelector(
   [selectSass],
   (sass) => sass.code
@@ -436,50 +559,68 @@ function Build(): React.ReactElement {
 function Server(): React.ReactElement {
   const height = useAppSelector(selectTerminalHeight)
   const width = useAppSelector(selectTerminalWidth)
+  const [showHeader, setShowHeader] = React.useState(false)
+  const [showLogs, setShowLogs] = React.useState(false)
+  const [showFooter, setShowFooter] = React.useState(false)
+  
+  React.useEffect(() => {
+    setTimeout(() => setShowHeader(true), 8)
+    setTimeout(() => setShowLogs(true), 16)
+    setTimeout(() => setShowFooter(true), Math.pow(2, 11))
+  }, [])
+
   return (
-    <Box flexDirection="row" height={height} width={width}>
-      <ServerStatus />
-      <ServerLogs />
+    <Box flexDirection="column" height={height} width={width}>
+      {showHeader && <ServerHeader />}
+      {showLogs && <ServerLogs />}
+      {showFooter && <ServerFooter />}
     </Box>
   )
 }
 
-function ServerStatus(): React.ReactElement {
-  const metadata = useAppSelector(state => state.metadata)
+function ServerHeader(): React.ReactElement {
   const name = useAppSelector(selectMetadataName)
   return (
-    <Box
-      borderColor="magenta"
-      borderStyle="round"
-      flexDirection="column"
-      width="50%"
-      alignItems="center"
-      justifyContent="center"
-    >
-      <Text color="magenta">zoetrope</Text>
-      <Box paddingLeft={1} paddingRight={1} flexDirection="column">
-        <Text>{name}</Text>
-        <Text>{metadata.homepage}</Text>
-      </Box>
-      <Box paddingLeft={1} paddingRight={1} flexDirection="column">
-        <Text>{metadata.description}</Text>
-      </Box>
+    <Box flexDirection="row" height={2} paddingLeft={3} paddingRight={1} alignItems="flex-end">
+      <Text color="whiteBright">{name}</Text>
+    </Box>
+  )
+}
+
+function ServerFooter(): React.ReactElement {
+  return (
+    <Box flexDirection="row" height={2} paddingLeft={3} paddingRight={1} alignItems="flex-start">
+      <Text>{name}</Text>
+      <Text>{version}</Text>
     </Box>
   )
 }
 
 function ServerLogs(): React.ReactElement {
   const lines = useAppSelector(state => state.log)
-  const height = useAppSelector(selectTerminalHeight) - 2
+  const maxHeight = useAppSelector(selectTerminalHeight) - 4
+ 
+  const [height, setHeight] = React.useState(1)
+  
+  React.useEffect(() => {
+    if (height >= maxHeight) {
+      return
+    }
+    setTimeout(() => {
+      setHeight(height + 1)
+    }, 16)
+  }, [height])
 
   return (
     <Box
+      height={height}
       borderColor="magenta"
-      borderStyle="round"
+      borderStyle="doubleSingle"
       flexDirection="column"
       paddingLeft={1}
       paddingRight={1}
-      width="50%"
+      marginLeft={1}
+      marginRight={1}
     >
       {lines.slice(0 - height).map((line, i) => (
         <Text key={i}>{line}</Text>
@@ -489,9 +630,15 @@ function ServerLogs(): React.ReactElement {
 }
 
 function Page(): React.ReactElement {
-  const metadata = useAppSelector(selectMetadata)
-  const name = useAppSelector(selectMetadataName)
+  const authorName = useAppSelector(selectMetadataAuthorName)
+  const authorUrl = useAppSelector(selectMetadataAuthorUrl)
   const cssFilename = useAppSelector(selectCssFilename)
+  const description = useAppSelector(selectMetadataDescription)
+  const name = useAppSelector(selectMetadataName)
+  const opengraph = useAppSelector(selectOpengraphTags)
+  const repositoryUrl = useAppSelector(selectMetadataRepositoryUrl)
+  const twitter = useAppSelector(selectTwitterTags)
+
   return (
     <html
       lang="en"
@@ -503,6 +650,23 @@ function Page(): React.ReactElement {
           name="viewport"
           content="width=device-width,initial-scale=1"
         />
+        
+        {opengraph.map(tag => (
+          <meta
+            key={tag.property}
+            property={tag.property}
+            content={tag.content}
+          />
+        ))}
+
+        {twitter.map(tag => (
+          <meta
+            key={tag.name}
+            property={tag.name}
+            content={tag.content}
+          />
+        ))}
+
         <style dangerouslySetInnerHTML={{
           __html: `
           :root {
@@ -759,17 +923,20 @@ function Page(): React.ReactElement {
           }
         `
         }} />
+        <title>
+          {name}
+        </title>
       </head>
       <body data-mode="menu">
         <main>
           <article>
             <header>
               <h1 itemProp="name">
-              {name}
+                {name}
               </h1>
             </header>
             <p itemProp="description">
-              {metadata.description}
+              {description}
             </p>
 
             <button aria-label="play">
@@ -787,15 +954,30 @@ function Page(): React.ReactElement {
               <path d="M0,24 L256,24" />
             </svg>
 
-            <p
-              itemProp="creator"
-              itemScope
-              itemType="http://schema.org/Person">
-              <span>by</span>
-              <a href={metadata.author.url} target="_blank">
-                <span itemProp="name">{metadata.author.name}</span>
+            {authorName && authorUrl && (
+              <p
+                itemProp="creator"
+                itemScope
+                itemType="http://schema.org/Person">
+                <span>by</span>
+                <a href={authorUrl} target="_blank">
+                  <span itemProp="name">{authorName}</span>
+                </a>
+              </p>
+            )}
+
+            {repositoryUrl && (
+              <a href={repositoryUrl.replace(".git", "")}>
+                <svg aria-label="GitHub logo" viewBox="0 0 1024 1024">
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M512 0a512 512 0 00-162 998c26 4 35-11 35-25v-95c-129 24-162-31-173-60-5-15-30-60-52-72-18-10-44-34-1-34 41-1 69 37 79 52 46 78 120 56 149 42 5-33 18-55 33-68-114-13-233-57-233-253 0-56 20-102 52-137-5-13-23-66 5-136 0 0 43-14 141 52a475 475 0 01256 0c98-66 141-52 141-52 28 70 10 123 5 136 33 35 53 81 53 137 0 197-120 240-234 253 19 16 35 47 35 95l-1 140c0 14 10 30 35 25A513 513 0 00512 0z"
+                  />
+                </svg>
+                Source Code
               </a>
-            </p>
+            )}
 
           </article>
         </main>
@@ -857,7 +1039,7 @@ function Page(): React.ReactElement {
 
               // {% if autoplay %}
                 // document.body.dataset.mode = "load"
-                // request.open("GET", "{{ url }}/{{ metadata.main | replace(".scss", "") }}-{{ version }}.css")
+                // request.open("GET", "{{ url }}/{{ main | replace(".scss", "") }}-{{ version }}.css")
                 // request.send()
               // {% endif %}
             }
@@ -888,6 +1070,14 @@ function runBuild(): Thunk {
     await dispatch(updateSass())
     await dispatch(buildSass())
     await dispatch(buildPage())
+    
+    const files = selectMetadataFiles(getState())
+    files.forEach(file => {
+      fs.copyFileSync(
+        file,
+        `_site/${file}`
+      )
+    })
   }
 }
 
