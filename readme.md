@@ -83,5 +83,4 @@ moment.
 MIT
 
 [PICO-8]: https://www.lexaloffle.com/pico-8.php
-[11ty]: https://www.11ty.dev
 [doomfire]: https://github.com/hendotcat/doomfire/blob/trunk/package.json
