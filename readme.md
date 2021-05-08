@@ -51,11 +51,14 @@ yarn add -D @hendotcat/zoetrope
 
 ## Usage
 
-zoetrope actually wraps around [Eleventy][11ty], so it has the same command-line API.
-For example, `yarn zoetrope --serve` starts an Eleventy dev server using the
-zoetrope config.
-And `yarn zoetrope` on its own builds a static version of the
-demo.
+```
+ zoetrope <command>
+
+ Commands
+   help    print this help text
+   build   build static site
+   server  run development server
+```
 
 I wanted to optimize out as much tooling boilerplate as possible from my
 workflow, so zoetrope pulls all the metadata it needs to build a demo from
