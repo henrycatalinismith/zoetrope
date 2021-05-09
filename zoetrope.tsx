@@ -1135,14 +1135,19 @@ function Page(): React.ReactElement {
                 }, Math.pow(2, 8))
               }
 
+              const reducedMotion = window.matchMedia("(prefers-reduced-motion)").matches
+              const motionWarning = "Motion warning: you're about to load animated content which may not be suitable for you if you're sensitive to motion. Are you sure you want to continue?"
+
               document
                 .querySelector("[aria-label='play']")
                 .addEventListener(
                   "click",
                   () => {
-                    document.body.dataset.mode = "load"
-                    request.open("GET", "${cssFilename}")
-                    request.send()
+                    if (!reducedMotion || confirm(motionWarning)) {
+                      document.body.dataset.mode = "load"
+                      request.open("GET", "${cssFilename}")
+                      request.send()
+                    }
                   }
                 )
 
