@@ -232,20 +232,26 @@ type ServerStatus = "offline" | "starting" | "online"
 interface Server {
   status: ServerStatus
   options: {
+    injectChanges: boolean,
     logLevel: "info" | "debug" | "warn" | "silent"
+    notify: boolean
     open: boolean
     port: number
     server: string
+    ui: boolean
   }
 }
 
 const initialServerState: Server = {
   status: "offline",
   options: {
+    injectChanges: false,
     logLevel: "silent",
+    notify: false,
     open: false,
     port: 8080,
     server: "_site",
+    ui: false,
   }
 }
 
@@ -435,6 +441,16 @@ const selectTwitterTags = createSelector(
   ]
 )
 
+const selectSassError = createSelector(
+  [selectSass],
+  (sass) => sass.error
+)
+
+const selectSassStatus = createSelector(
+  [selectSass],
+  (sass) => sass.status
+)
+
 const selectSassCode = createSelector(
   [selectSass],
   (sass) => sass.code
@@ -598,10 +614,17 @@ function ServerFooter(): React.ReactElement {
 }
 
 function ServerLogs(): React.ReactElement {
+  const sassError = useAppSelector(selectSassError)
+  const sassStatus = useAppSelector(selectSassStatus)
   const lines = useAppSelector(state => state.log)
   const maxHeight = useAppSelector(selectTerminalHeight) - 4
  
   const [height, setHeight] = React.useState(1)
+  
+  let borderColor = "magenta"
+  if (sassStatus === "error") {
+    borderColor = "red"
+  }
   
   React.useEffect(() => {
     if (height >= maxHeight) {
@@ -615,7 +638,7 @@ function ServerLogs(): React.ReactElement {
   return (
     <Box
       height={height}
-      borderColor="magenta"
+      borderColor={borderColor}
       borderStyle="doubleSingle"
       flexDirection="column"
       paddingLeft={1}
@@ -623,9 +646,15 @@ function ServerLogs(): React.ReactElement {
       marginLeft={1}
       marginRight={1}
     >
-      {lines.slice(0 - height).map((line, i) => (
-        <Text key={i}>{line}</Text>
-      ))}
+      {sassStatus === "error" ? (
+        <Text>{sassError}</Text>
+      ) : (
+        <>
+          {lines.slice(0 - height).map((line, i) => (
+            <Text key={i}>{line}</Text>
+          ))}
+        </>
+      )}
     </Box>
   )
 }
@@ -1044,11 +1073,11 @@ function Page(): React.ReactElement {
                   }
                 )
 
-              // {% if autoplay %}
-                // document.body.dataset.mode = "load"
-                // request.open("GET", "{{ url }}/{{ main | replace(".scss", "") }}-{{ version }}.css")
-                // request.send()
-              // {% endif %}
+              ${command === "server" && `
+                document.body.dataset.mode = "load"
+                request.open("GET", "${cssFilename}")
+                request.send()
+              `}
             }
           )
           `
@@ -1097,7 +1126,16 @@ function runServer(): Thunk {
       dispatch(server.actions.online())
     })
     await dispatch(runBuild())
-    await dispatch(watchSass())
+
+    const main = selectMetadataMain(getState())
+    const watcher = chokidar.watch([main], {
+      persistent: true
+    })
+
+    watcher.on("change", async () => {
+      await dispatch(runBuild())
+      bs.reload()
+    })
 
     process.stdout.on("resize", () => {
       dispatch(terminal.actions.resize([
@@ -1143,8 +1181,8 @@ function buildSass(): Thunk {
         { data, functions },
         async (err, result) => {
           if (err) {
-            dispatch(sass.actions.error(err.stack))
-            reject()
+            dispatch(sass.actions.error(err.formatted))
+            resolve(null)
           } else {
             const sassResult: SassResult = {
               ...result,
@@ -1160,18 +1198,6 @@ function buildSass(): Thunk {
           }
         }
       )
-    })
-  }
-}
-
-function watchSass(): Thunk {
-  return async (dispatch, getState) => {
-    const main = selectMetadataMain(getState())
-    const watcher = chokidar.watch([main], {
-      persistent: true
-    })
-    watcher.on("change", async () => {
-      await dispatch(runBuild())
     })
   }
 }
