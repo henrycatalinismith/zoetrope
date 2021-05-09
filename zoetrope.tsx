@@ -25,6 +25,81 @@ import { render, Box, Text, Newline, useApp } from "ink"
 import { render as renderSass, types as sassTypes } from "sass"
 import { name, description, version } from "./package.json"
 
+interface LogEntry {
+  date: string
+  text: string
+}
+
+interface LogState {
+  entries: LogEntry[]
+}
+
+interface MetadataState {
+  name?: string
+  description?: string
+  main?: string
+  homepage?: string
+  author?: {
+    name?: string
+    email?: string
+    url?: string
+  }
+  files?: string[]
+  repository?: {
+    url?: string
+  }
+}
+
+type PageModes = "idle" | "busy"
+
+interface PageState {
+  mode: PageModes
+  html: string
+}
+
+type SassModes = "idle" | "busy" | "okay" | "error"
+
+interface SassResult {
+  css: string
+  map?: string
+  stats: {
+    entry: string
+    includedFiles: string[]
+    start: number
+    end: number
+    duration: number
+  }
+}
+
+interface SassState {
+  code: string
+  error: string
+  result: SassResult,
+  mode: SassModes
+}
+
+type ServerMode = "offline" | "starting" | "online"
+
+interface ServerState {
+  mode: ServerMode
+  options: {
+    injectChanges: boolean,
+    logLevel: "info" | "debug" | "warn" | "silent"
+    notify: boolean
+    open: boolean
+    port: number
+    server: string
+    ui: boolean
+  }
+}
+
+interface TerminalState {
+  height: number
+  width: number
+}
+
+type ZoetropeCommands = "help" | "build" | "server"
+
 function unquote(value) {
   if (value instanceof sassTypes.Number) {
     return value.getValue()
@@ -92,15 +167,13 @@ const functions = {
   "svg($x, $y, $w, $h, $children: '')": svg,
 }
 
-type Command = "help" | "build" | "server"
-
 const command = createSlice({
   name: "command",
-  initialState: "help" as Command,
+  initialState: "help" as ZoetropeCommands,
   reducers: {
-    run: (state, action: PayloadAction<string>): Command => {
+    run: (state, action: PayloadAction<string>): ZoetropeCommands => {
       if (["help", "build", "server"].includes(action.payload)) {
-        return action.payload as Command
+        return action.payload as ZoetropeCommands
       } else {
         return state
       }
@@ -108,49 +181,30 @@ const command = createSlice({
   },
 })
 
+const initialLogState: LogState = {
+  entries: [],
+}
+
 const log = createSlice({
   name: "log",
-  initialState: [],
+  initialState: initialLogState,
   reducers: {
-    add: (state, action: PayloadAction<string>): void => {
-      state.push(action.payload)
+    add: (state, action: PayloadAction<LogEntry>): void => {
+      state.entries.push(action.payload)
     },
   },
 })
-
-interface Metadata {
-  name?: string
-  description?: string
-  main?: string
-  homepage?: string
-  author?: {
-    name?: string
-    email?: string
-    url?: string
-  }
-  files?: string[]
-  repository?: {
-    url?: string
-  }
-}
 
 const metadata = createSlice({
   name: "metadata",
   initialState: fs.readJsonSync(
     `${process.cwd()}/package.json`,
-  ) as Metadata,
+  ) as MetadataState,
   reducers: {},
 })
 
-type PageStatuses = "idle" | "busy"
-
-interface Page {
-  status: PageStatuses
-  html: string
-}
-
-const initialPageState: Page = {
-  status: "idle",
+const initialPageState: PageState = {
+  mode: "idle",
   html: "",
 }
 
@@ -159,37 +213,16 @@ const page = createSlice({
   initialState: initialPageState,
   reducers: {
     build: (state) => {
-      state.status = "busy"
+      state.mode = "busy"
     },
     done: (state, action: PayloadAction<string>) => {
-      state.status = "idle"
+      state.mode = "idle"
       state.html = action.payload
     },
   },
 })
 
-type SassStatuses = "idle" | "busy" | "okay" | "error"
-
-interface SassResult {
-  css: string
-  map?: string
-  stats: {
-    entry: string
-    includedFiles: string[]
-    start: number
-    end: number
-    duration: number
-  }
-}
-
-interface Sass {
-  code: string
-  error: string
-  result: SassResult,
-  status: SassStatuses
-}
-
-const initialSassState: Sass = {
+const initialSassState: SassState = {
   code: "",
   error: "",
   result: {
@@ -203,7 +236,7 @@ const initialSassState: Sass = {
       duration: 0,
     }
   },
-  status: "idle"
+  mode: "idle"
 }
 
 const sass = createSlice({
@@ -214,36 +247,21 @@ const sass = createSlice({
       state.code = action.payload
     },
     build: (state) => {
-      state.status = "busy"
+      state.mode = "busy"
     },
     result: (state, action: PayloadAction<SassResult>) => {
       state.result = action.payload
-      state.status = "okay"
+      state.mode = "okay"
     },
     error: (state, action: PayloadAction<string>) => {
       state.error = action.payload
-      state.status = "error"
+      state.mode = "error"
     },
   },
 })
 
-type ServerStatus = "offline" | "starting" | "online"
-
-interface Server {
-  status: ServerStatus
-  options: {
-    injectChanges: boolean,
-    logLevel: "info" | "debug" | "warn" | "silent"
-    notify: boolean
-    open: boolean
-    port: number
-    server: string
-    ui: boolean
-  }
-}
-
-const initialServerState: Server = {
-  status: "offline",
+const initialServerState: ServerState = {
+  mode: "offline",
   options: {
     injectChanges: false,
     logLevel: "silent",
@@ -259,21 +277,16 @@ const server = createSlice({
   name: "server",
   initialState: initialServerState,
   reducers: {
-    starting: (state) => {
-      state.status = "starting"
+    start: (state) => {
+      state.mode = "starting"
     },
     online: (state) => {
-      state.status = "online"
+      state.mode = "online"
     },
   },
 })
 
-interface Terminal {
-  height: number
-  width: number
-}
-
-const initialTerminalState: Terminal = {
+const initialTerminalState: TerminalState = {
   height: process.stdout.rows,
   width: process.stdout.columns,
 }
@@ -290,6 +303,36 @@ const terminal = createSlice({
   },
 })
 
+function stringifyAction(action: any, state: RootState): string {
+  switch (action.type) {
+    case "command/run":
+      return `zoetrope ${action.payload}`
+
+    case "page/build":
+      return `building index.html`
+
+    case "page/done":
+      return `built index.html`
+
+    case "sass/build":
+      return `rendering ${selectMetadataMain(state)}`
+
+    case "sass/result":
+      return `built ${selectCssFilename(state)} in ${selectSassResult(state).stats.duration}ms`
+
+    case "sass/update":
+      return `read ${selectMetadataMain(state)}`
+
+    case "server/online":
+      return `server online on port ${selectServerPort(state)}`
+
+    case "server/start":
+      return `server starting on port ${selectServerPort(state)}`
+
+  }
+  return action.type
+}
+
 const store = configureStore({
   reducer: {
     command: command.reducer,
@@ -303,7 +346,7 @@ const store = configureStore({
   .concat(store => next => async action => {
     next(action)
     if (action.type !== "log/add") {
-      store.dispatch(log.actions.add(action.type))
+      store.dispatch(logOutput(stringifyAction(action, store.getState())))
     }
   }),
 })
@@ -314,10 +357,22 @@ const useAppDispatch = () => useDispatch<AppDispatch>()
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
 export type Thunk = ThunkAction<void, RootState, null, Action<string>>
 
-const selectCommand = ({ command }): Command => command
-const selectMetadata = ({ metadata }): Metadata => metadata
-const selectSass = ({ sass }): Sass => sass
-const selectTerminal = ({ terminal }): Terminal => terminal
+const selectCommand = ({ command }): ZoetropeCommands => command
+const selectLog = ({ log }): LogState => log
+const selectMetadata = ({ metadata }): MetadataState => metadata
+const selectSass = ({ sass }): SassState => sass
+const selectServer = ({ server }): ServerState => server
+const selectTerminal = ({ terminal }): TerminalState => terminal
+
+const selectLogEntries = createSelector(
+  [selectLog],
+  (log) => log.entries
+)
+
+const selectLogMaxDate = createSelector(
+  [selectLogEntries],
+  (entries) => entries[entries.length - 1].date
+)
 
 const selectMetadataMain = createSelector(
   [selectMetadata],
@@ -393,29 +448,29 @@ const selectOpengraphTags = createSelector(
       property: "og:description",
       content: description,
     })
-    
+
     if (image) {
       opengraph.push({
         property: "og:image",
         content: `${url.replace(/\/$/, "")}/${image}`,
       })
-  
+
       opengraph.push({
         property: "og:image:alt",
         content: description,
       })
-  
+
       opengraph.push({
         property: "og:image:height",
         content: 630,
       })
-  
+
       opengraph.push({
         property: "og:image:height",
         content: 1200,
       })
     }
-    
+
     return opengraph
   }
 )
@@ -446,14 +501,19 @@ const selectSassError = createSelector(
   (sass) => sass.error
 )
 
-const selectSassStatus = createSelector(
+const selectSassMode = createSelector(
   [selectSass],
-  (sass) => sass.status
+  (sass) => sass.mode
 )
 
 const selectSassCode = createSelector(
   [selectSass],
   (sass) => sass.code
+)
+
+const selectSassResult = createSelector(
+  [selectSass],
+  (sass) => sass.result
 )
 
 const selectSassHash = createSelector(
@@ -468,6 +528,11 @@ const selectSassHash = createSelector(
 const selectCssFilename = createSelector(
   [selectMetadataName, selectSassHash],
   (name, hash) => `${name}-${hash}.css`
+)
+
+const selectServerPort = createSelector(
+  [selectServer],
+  (server) => server.options.port
 )
 
 const selectTerminalHeight = createSelector(
@@ -563,11 +628,11 @@ function HelpCommand({ name, description }): React.ReactElement {
 }
 
 function Build(): React.ReactElement {
-  const lines = useAppSelector(state => state.log)
+  const entries = useAppSelector(selectLogEntries)
   return (
-    <Box height={lines.length} flexDirection="column">
-      {lines.map((line, i) => (
-        <Text key={i}>{line}</Text>
+    <Box height={entries.length} flexDirection="column">
+      {entries.map((entry, i) => (
+        <Text key={i}>{entry.text}</Text>
       ))}
     </Box>
   )
@@ -579,7 +644,7 @@ function Server(): React.ReactElement {
   const [showHeader, setShowHeader] = React.useState(false)
   const [showLogs, setShowLogs] = React.useState(false)
   const [showFooter, setShowFooter] = React.useState(false)
-  
+
   React.useEffect(() => {
     setTimeout(() => setShowHeader(true), 8)
     setTimeout(() => setShowLogs(true), 16)
@@ -615,17 +680,18 @@ function ServerFooter(): React.ReactElement {
 
 function ServerLogs(): React.ReactElement {
   const sassError = useAppSelector(selectSassError)
-  const sassStatus = useAppSelector(selectSassStatus)
-  const lines = useAppSelector(state => state.log)
+  const sassMode = useAppSelector(selectSassMode)
+  const entries = useAppSelector(selectLogEntries)
+  const maxDate = useAppSelector(selectLogMaxDate)
   const maxHeight = useAppSelector(selectTerminalHeight) - 4
- 
+
   const [height, setHeight] = React.useState(1)
-  
+
   let borderColor = "magenta"
-  if (sassStatus === "error") {
+  if (sassMode === "error") {
     borderColor = "red"
   }
-  
+
   React.useEffect(() => {
     if (height >= maxHeight) {
       return
@@ -646,13 +712,20 @@ function ServerLogs(): React.ReactElement {
       marginLeft={1}
       marginRight={1}
     >
-      {sassStatus === "error" ? (
+      {sassMode === "error" ? (
         <Text>{sassError}</Text>
       ) : (
         <>
-          {lines.slice(0 - height).map((line, i) => (
-            <Text key={i}>{line}</Text>
-          ))}
+          {entries.slice(0 - height).map((entry, i) => {
+            const color = (Date.parse(maxDate) - Date.parse(entry.date) < 1024) ? "cyan" : ""
+            return (
+              <Box key={i}>
+                <Text color="yellow">{entry.date}</Text>
+                <Text> </Text>
+                <Text color={color}>{entry.text}</Text>
+              </Box>
+            )
+          })}
         </>
       )}
     </Box>
@@ -686,7 +759,7 @@ function Page(): React.ReactElement {
           name="viewport"
           content="width=device-width,initial-scale=1"
         />
-        
+
         {opengraph.map(tag => (
           <meta
             key={tag.property}
@@ -1106,7 +1179,7 @@ function runBuild(): Thunk {
     await dispatch(updateSass())
     await dispatch(buildSass())
     await dispatch(buildPage())
-    
+
     const files = selectMetadataFiles(getState())
     files.forEach(file => {
       fs.copyFileSync(
@@ -1119,7 +1192,7 @@ function runBuild(): Thunk {
 
 function runServer(): Thunk {
   return async (dispatch, getState) => {
-    dispatch(server.actions.starting())
+    dispatch(server.actions.start())
     const bs = browserSync.create()
     bs.init({ ...getState().server.options })
     bs.emitter.on("init", () => {
@@ -1132,10 +1205,16 @@ function runServer(): Thunk {
       persistent: true
     })
 
-    watcher.on("change", async () => {
-      await dispatch(runBuild())
-      bs.reload()
-    })
+    watcher.on(
+      "change",
+      _.debounce(
+        async function() {
+          await dispatch(runBuild())
+          bs.reload()
+        },
+        128
+      )
+    )
 
     process.stdout.on("resize", () => {
       dispatch(terminal.actions.resize([
@@ -1161,6 +1240,16 @@ function buildPage(): Thunk {
 
     fs.writeFileSync(`_site/index.html`, html)
     dispatch(page.actions.done(html))
+  }
+}
+
+function logOutput(text: string): Thunk {
+  return async (dispatch, getState) => {
+    const date = (new Date).toISOString()
+    await dispatch(log.actions.add({
+      date,
+      text,
+    }))
   }
 }
 
