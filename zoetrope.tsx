@@ -599,7 +599,7 @@ function ServerHeader(): React.ReactElement {
   const name = useAppSelector(selectMetadataName)
   return (
     <Box flexDirection="row" height={2} paddingLeft={3} paddingRight={1} alignItems="flex-end">
-      <Text color="whiteBright">{name}</Text>
+      <Text color="magenta">{name}</Text>
     </Box>
   )
 }
