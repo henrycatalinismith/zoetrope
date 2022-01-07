@@ -46,7 +46,7 @@ But that's not really the goal here!
 ## Installation
 
 ```
-yarn add -D @hendotcat/zoetrope
+yarn add -D @henrycatalinismith/zoetrope
 ```
 
 ## Usage
