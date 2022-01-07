@@ -1,11 +1,11 @@
 {
-  "name": "@hendotcat/zoetrope",
+  "name": "@henrycatalinismith/zoetrope",
   "description": "CSS demo build tool",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "license": "MIT",
   "author": {
     "name": "Henry Catalini Smith",
-    "email": "smith@hen.cat",
+    "email": "henry@catalinismith.com",
     "url": "https://hen.cat/"
   },
   "bin": {
