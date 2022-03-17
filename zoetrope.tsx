@@ -3,7 +3,7 @@ import _ from "lodash"
 import browserSync from "browser-sync"
 import chokidar from "chokidar"
 import createHtmlElement from "create-html-element"
-import crypto from "crypto"
+import crypto, { privateEncrypt } from "crypto"
 import fs from "fs-extra"
 import {
   Action,
@@ -22,12 +22,15 @@ import {
   useSelector,
 } from "react-redux/lib/alternate-renderers"
 import { render, Box, Text, Newline, useApp } from "ink"
-import { render as renderSass, types as sassTypes } from "sass"
+import { compileStringAsync, SassNumber, SassString, CustomFunction, render as renderSass, types as sassTypes } from "sass"
 import { name, description, version } from "./package.json"
+
+type LogEntryType = "action" | "debug" | "warn"
 
 interface LogEntry {
   date: string
   text: string
+  type: LogEntryType
 }
 
 interface LogState {
@@ -61,14 +64,7 @@ type SassModes = "idle" | "busy" | "okay" | "error"
 
 interface SassResult {
   css: string
-  map?: string
-  stats: {
-    entry: string
-    includedFiles: string[]
-    start: number
-    end: number
-    duration: number
-  }
+  sourceMap?: string
 }
 
 interface SassState {
@@ -100,71 +96,75 @@ interface TerminalState {
 
 type ZoetropeCommands = "help" | "build" | "server"
 
-function unquote(value) {
-  if (value instanceof sassTypes.Number) {
-    return value.getValue()
+function unquote(value): string {
+  if (value instanceof SassNumber) {
+    return value.value.toString()
   }
-  return new sassTypes.String(
-    value.getValue()
-  ).getValue()
+  if (value instanceof SassString) {
+    const str = value.toString()
+    if (value.hasBrackets || str.match(/^".*"$/)) {
+      return str.substring(1, str.length - 1)
+    }
+    return str
+  }
 }
 
-function html(tagName, props, children) {
-  const name = unquote(tagName) as string
-  const attributes = {}
-  for (let i = 0; i < props.getLength(); i++) {
-    const key = unquote(props.getKey(i))
-    const value = unquote(props.getValue(i))
-    attributes[key] = value
-  }
-  const html = children.getValue()
-  return new sassTypes.String(
-    createHtmlElement({
-      name,
-      attributes,
+const functions: Record<string, CustomFunction<"sync">> = {
+  "html($tagName, $props: (), $children: '')": (args) => {
+    const name = unquote(args[0].assertString("tagName"))
+    const props = args[1].assertMap("props").contents
+    const html = unquote(args[2].assertString("children"))
+    const attributes = {}
+
+    const entries = props.entries()
+    for (let entry = entries.next(); !entry.done; entry = entries.next()) {
+      const [key, value] = entry.value
+      attributes[unquote(key)] = unquote(value)
+    }
+
+    return new SassString(
+      createHtmlElement({
+        name,
+        attributes,
+        html,
+      }),
+      { quotes: false }
+    )
+  },
+
+  "svg($x, $y, $w, $h, $children: '')": (args) => {
+    const x = args[0].assertNumber("x").asInt
+    const y = args[1].assertNumber("y").asInt
+    const w = args[2].assertNumber("w").asInt
+    const h = args[3].assertNumber("h").asInt
+    const html = unquote(args[4].assertString("children"))
+
+    let svg = createHtmlElement({
+      name: "svg",
+      attributes: {
+        "xmlns": "http://www.w3.org/2000/svg",
+        "xmlns:xlink": "http://www.w3.org/1999/xlink",
+        "viewBox": [x, y, w, h].join(" "),
+      },
       html,
     })
-  )
-}
 
-function implode(pieces, glue) {
-  const array = []
-  for (let i = 0; i < pieces.getLength(); i++) {
-    array.push(unquote(pieces.getValue(i)))
-  }
-  const output = array.join(unquote(glue) as string)
-  return new sassTypes.String(output)
-}
+    svg = encodeURIComponent(svg)
 
-function svg(x, y, w, h, children) {
-  const tagName = new sassTypes.String("svg")
-  const props = new sassTypes.Map(3)
+    const url = new SassString(`url("data:image/svg+xml;utf8,${svg}")`, { quotes: false })
+    return url
+  },
 
-  props.setKey(0, new sassTypes.String("xmlns"))
-  props.setValue(0, new sassTypes.String("http://www.w3.org/2000/svg"))
-
-  props.setKey(1, new sassTypes.String("xmlns:xlink"))
-  props.setValue(1, new sassTypes.String("http://www.w3.org/1999/xlink"))
-
-  props.setKey(2, new sassTypes.String("viewBox"))
-  props.setValue(2, new sassTypes.String([
-    x.getValue(),
-    y.getValue(),
-    w.getValue(),
-    h.getValue(),
-  ].join(" ")))
-
-  const dirty = html(tagName, props, children)
-  const clean = encodeURIComponent(dirty.getValue())
-  const url = new sassTypes.String(`url("data:image/svg+xml;utf8,${clean}")`)
-
-  return url
-}
-
-const functions = {
-  "html($tagName, $props: (), $children: '')": html,
-  "implode($pieces, $glue: '')": implode,
-  "svg($x, $y, $w, $h, $children: '')": svg,
+  "implode($pieces, $glue: '')": (args) => {
+    const pieces = args[0].asList.toArray()
+    const glue = args[1].assertString("glue")
+    const array = []
+    for (let i = 0; i < pieces.length; i++) {
+      array.push(unquote(pieces[i]))
+    }
+    const output = array.join(unquote(glue))
+    return new SassString(output, { quotes: false })
+  },
 }
 
 const command = createSlice({
@@ -227,14 +227,7 @@ const initialSassState: SassState = {
   error: "",
   result: {
     css: "",
-    map: "",
-    stats: {
-      entry: "",
-      includedFiles: [],
-      start: 0,
-      end: 0,
-      duration: 0,
-    }
+    sourceMap: "",
   },
   mode: "idle"
 }
@@ -318,7 +311,7 @@ function stringifyAction(action: any, state: RootState): string {
       return `rendering ${selectMetadataMain(state)}`
 
     case "sass/result":
-      return `built ${selectCssFilename(state)} in ${selectSassResult(state).stats.duration}ms`
+      return `built ${selectCssFilename(state)}`
 
     case "sass/update":
       return `read ${selectMetadataMain(state)}`
@@ -346,7 +339,7 @@ const store = configureStore({
   .concat(store => next => async action => {
     next(action)
     if (action.type !== "log/add") {
-      store.dispatch(logOutput(stringifyAction(action, store.getState())))
+      store.dispatch(logOutput("action", stringifyAction(action, store.getState())))
     }
   }),
 })
@@ -717,7 +710,14 @@ function ServerLogs(): React.ReactElement {
       ) : (
         <>
           {entries.slice(0 - height).map((entry, i) => {
-            const color = (Date.parse(maxDate) - Date.parse(entry.date) < 1024) ? "cyan" : ""
+            let color = ""
+            if (entry.type == "action") {
+              color = (Date.parse(maxDate) - Date.parse(entry.date) < 1024) ? "cyan" : ""
+            } else if (entry.type == "warn") {
+              color = "red"
+            } else if (entry.type == "debug") {
+              color = "magenta"
+            }
             return (
               <Box key={i}>
                 <Text color="yellow">{entry.date}</Text>
@@ -1248,12 +1248,13 @@ function buildPage(): Thunk {
   }
 }
 
-function logOutput(text: string): Thunk {
+function logOutput(type: LogEntryType, text: string): Thunk {
   return async (dispatch, getState) => {
     const date = (new Date).toISOString()
     await dispatch(log.actions.add({
       date,
       text,
+      type,
     }))
   }
 }
@@ -1268,31 +1269,28 @@ function updateSass(): Thunk {
 
 function buildSass(): Thunk {
   return async (dispatch, getState) => {
-    return new Promise((resolve, reject) => {
-      const data = selectSassCode(getState())
-      dispatch(sass.actions.build())
-      renderSass(
-        { data, functions },
-        async (err, result) => {
-          if (err) {
-            dispatch(sass.actions.error(err.formatted))
-            resolve(null)
-          } else {
-            const sassResult: SassResult = {
-              ...result,
-              css: result.css.toString(),
-              map: result.map?.toString(),
-            }
-            await dispatch(sass.actions.result(sassResult))
-            const cssFilename = selectCssFilename(getState())
-            const cssPath = `_site/${cssFilename}`
-            fs.ensureDirSync("_site")
-            fs.writeFileSync(cssPath, sassResult.css)
-            resolve(null)
-          }
-        }
-      )
-    })
+    const scss = selectSassCode(getState())
+    const logger = {
+      debug: (message, span) => {
+        dispatch(logOutput("debug", `@debug ${message}`))
+      },
+      warn: (message, options) => {
+        dispatch(logOutput("warn", `@warn ${[options.span.context, message].join("\n")}`))
+      }
+    }
+
+    const options = { functions, logger }
+    dispatch(sass.actions.build())
+    const result = await compileStringAsync(scss, options as any)
+    const sassResult: SassResult = {
+      css: result.css.toString(),
+      sourceMap: result.sourceMap?.toString(),
+    }
+    dispatch(sass.actions.result(sassResult))
+    const cssFilename = selectCssFilename(getState())
+    const cssPath = `_site/${cssFilename}`
+    fs.ensureDirSync("_site")
+    fs.writeFileSync(cssPath, sassResult.css)
   }
 }
 
