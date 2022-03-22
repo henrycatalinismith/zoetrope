@@ -84,7 +84,6 @@ interface ServerState {
     notify: boolean
     open: boolean
     port: number
-    server: string
     ui: boolean
   }
 }
@@ -261,7 +260,6 @@ const initialServerState: ServerState = {
     notify: false,
     open: false,
     port: 8080,
-    server: "_site",
     ui: false,
   }
 }
@@ -1186,12 +1184,12 @@ function runBuild(): Thunk {
     await dispatch(buildPage())
 
     const files = selectMetadataFiles(getState())
-    files.forEach(file => {
-      fs.copyFileSync(
-        file,
-        `_site/${file}`
-      )
-    })
+    //files.forEach(file => {
+      //fs.copyFileSync(
+        //file,
+        //`_site/${file}`
+      //)
+    //})
   }
 }
 
@@ -1232,7 +1230,7 @@ function runServer(): Thunk {
 
 function buildPage(): Thunk {
   return async (dispatch, getState) => {
-    fs.ensureDirSync("_site")
+    // fs.ensureDirSync("_site")
     dispatch(page.actions.build())
 
     let html = ReactDOMServer.renderToString(
@@ -1243,7 +1241,7 @@ function buildPage(): Thunk {
     html = `<!doctype html>${html}`
     html = html.replace(/ data-reactroot=""/, "")
 
-    fs.writeFileSync(`_site/index.html`, html)
+    fs.writeFileSync("index.html", html)
     dispatch(page.actions.done(html))
   }
 }
@@ -1288,9 +1286,9 @@ function buildSass(): Thunk {
     }
     dispatch(sass.actions.result(sassResult))
     const cssFilename = selectCssFilename(getState())
-    const cssPath = `_site/${cssFilename}`
-    fs.ensureDirSync("_site")
-    fs.writeFileSync(cssPath, sassResult.css)
+    // const cssPath = `_site/${cssFilename}`
+    // fs.ensureDirSync("_site")
+    fs.writeFileSync(cssFilename, sassResult.css)
   }
 }
 
