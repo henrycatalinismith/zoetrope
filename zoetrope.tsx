@@ -2,6 +2,7 @@
 import _ from "lodash"
 import browserSync from "browser-sync"
 import chokidar from "chokidar"
+import path from "path"
 import createHtmlElement from "create-html-element"
 import crypto, { privateEncrypt } from "crypto"
 import fs from "fs-extra"
@@ -24,6 +25,7 @@ import {
 import { render, Box, Text, Newline, useApp } from "ink"
 import { compileStringAsync, SassNumber, SassString, CustomFunction, render as renderSass, types as sassTypes } from "sass"
 import { name, description, version } from "./package.json"
+import { URL } from "url"
 
 type LogEntryType = "action" | "debug" | "warn"
 
@@ -38,19 +40,13 @@ interface LogState {
 }
 
 interface MetadataState {
-  name?: string
-  description?: string
-  main?: string
-  homepage?: string
-  author?: {
-    name?: string
-    email?: string
-    url?: string
-  }
-  files?: string[]
-  repository?: {
-    url?: string
-  }
+  title: string
+  description: string
+  url: string
+  author: string
+  homepage: string
+  source: string
+  opengraph: string
 }
 
 type PageModes = "idle" | "busy"
@@ -68,6 +64,7 @@ interface SassResult {
 }
 
 interface SassState {
+  path: string
   code: string
   error: string
   result: SassResult,
@@ -93,7 +90,7 @@ interface TerminalState {
   width: number
 }
 
-type ZoetropeCommands = "help" | "build" | "server"
+type ZoetropeCommands = "help" | "build" | "serve"
 
 function unquote(value): string {
   if (value instanceof SassNumber) {
@@ -164,6 +161,16 @@ const functions: Record<string, CustomFunction<"sync">> = {
     const output = array.join(unquote(glue))
     return new SassString(output, { quotes: false })
   },
+
+  "updateMetadata($newMetadata)": (args) => {
+    const newMetadata = args[0].assertMap("newMetadata").contents.toJSON()
+    const payload = {}
+    Object.entries(newMetadata).map(([k, v]) => {
+      payload[k] = unquote(v)
+    })
+    store.dispatch(metadata.actions.update(payload as MetadataState))
+    return new SassString("", { quotes: false })
+  },
 }
 
 const command = createSlice({
@@ -171,7 +178,7 @@ const command = createSlice({
   initialState: "help" as ZoetropeCommands,
   reducers: {
     run: (state, action: PayloadAction<string>): ZoetropeCommands => {
-      if (["help", "build", "server"].includes(action.payload)) {
+      if (["help", "build", "serve"].includes(action.payload)) {
         return action.payload as ZoetropeCommands
       } else {
         return state
@@ -196,10 +203,18 @@ const log = createSlice({
 
 const metadata = createSlice({
   name: "metadata",
-  initialState: fs.readJsonSync(
-    `${process.cwd()}/package.json`,
-  ) as MetadataState,
-  reducers: {},
+  initialState: {
+    title: "",
+    description: "",
+    url: "",
+    author: "",
+    homepage: "",
+    source: "",
+    opengraph: "",
+  },
+  reducers: {
+    update: (state, action: PayloadAction<MetadataState>) => action.payload
+  },
 })
 
 const initialPageState: PageState = {
@@ -222,6 +237,7 @@ const page = createSlice({
 })
 
 const initialSassState: SassState = {
+  path: "",
   code: "",
   error: "",
   result: {
@@ -235,6 +251,9 @@ const sass = createSlice({
   name: "sass",
   initialState: initialSassState,
   reducers: {
+    locate: (state, action: PayloadAction<string>) => {
+      state.path = action.payload
+    },
     update: (state, action: PayloadAction<string>) => {
       state.code = action.payload
     },
@@ -297,7 +316,10 @@ const terminal = createSlice({
 function stringifyAction(action: any, state: RootState): string {
   switch (action.type) {
     case "command/run":
-      return `zoetrope ${action.payload}`
+      return `run ${action.payload}`
+
+    case "metadata/update":
+      return `hello ${JSON.stringify(selectMetadata(state))}`
 
     case "page/build":
       return `building index.html`
@@ -306,13 +328,16 @@ function stringifyAction(action: any, state: RootState): string {
       return `built index.html`
 
     case "sass/build":
-      return `rendering ${selectMetadataMain(state)}`
+      return `rendering ${selectSassPath(state)}`
+
+    case "sass/locate":
+      return `found ${selectSassPath(state)}`
 
     case "sass/result":
       return `built ${selectCssFilename(state)}`
 
     case "sass/update":
-      return `read ${selectMetadataMain(state)}`
+      return `read ${selectSassPath(state)}`
 
     case "server/online":
       return `server online on port ${selectServerPort(state)}`
@@ -336,7 +361,9 @@ const store = configureStore({
   middleware: (getDefaultMiddleware) => getDefaultMiddleware()
   .concat(store => next => async action => {
     next(action)
-    if (action.type !== "log/add") {
+    if (process.env.DEBUG) {
+      console.log(stringifyAction(action, store.getState()))
+    } else if (action.type !== "log/add") {
       store.dispatch(logOutput("action", stringifyAction(action, store.getState())))
     }
   }),
@@ -365,29 +392,14 @@ const selectLogMaxDate = createSelector(
   (entries) => entries[entries.length - 1].date
 )
 
-const selectMetadataMain = createSelector(
+const selectMetadataTitle = createSelector(
   [selectMetadata],
-  (metadata) => metadata.main
+  (metadata) => metadata.title,
 )
 
-const selectMetadataName = createSelector(
+const selectMetadataAuthor = createSelector(
   [selectMetadata],
-  (metadata) => metadata.name.replace(/^.+\//, "")
-)
-
-const selectMetadataAuthorEmail = createSelector(
-  [selectMetadata],
-  (metadata) => metadata.author?.email || ""
-)
-
-const selectMetadataAuthorName = createSelector(
-  [selectMetadata],
-  (metadata) => metadata.author?.name || ""
-)
-
-const selectMetadataAuthorUrl = createSelector(
-  [selectMetadata],
-  (metadata) => metadata.author?.url || ""
+  (metadata) => metadata.author
 )
 
 const selectMetadataDescription = createSelector(
@@ -395,39 +407,34 @@ const selectMetadataDescription = createSelector(
   (metadata) => metadata.description || ""
 )
 
-const selectMetadataFiles = createSelector(
-  [selectMetadata],
-  (metadata) => metadata.files || []
-)
-
 const selectMetadataHomepage = createSelector(
   [selectMetadata],
   (metadata) => metadata.homepage || ""
 )
 
-const selectMetadataRepositoryUrl = createSelector(
+const selectMetadataSource = createSelector(
   [selectMetadata],
-  (metadata) => metadata.repository?.url || ""
+  (metadata) => metadata.source
 )
 
-const selectOpengraphImage = createSelector(
-  [selectMetadataFiles],
-  (files) => _.find(files, f => f.match(/opengraph/))
+const selectMetadataOpengraph = createSelector(
+  [selectMetadata],
+  (metadata) => metadata.opengraph
 )
 
 const selectOpengraphTags = createSelector(
   [
-    selectMetadataName,
+    selectMetadataTitle,
     selectMetadataHomepage,
     selectMetadataDescription,
-    selectOpengraphImage,
+    selectMetadataOpengraph,
   ],
-  (name, url, description, image) => {
+  (title, url, description, image) => {
     const opengraph = []
 
     opengraph.push({
       property: "og:title",
-      content: name,
+      content: title,
     })
 
     opengraph.push({
@@ -468,17 +475,17 @@ const selectOpengraphTags = createSelector(
 
 const selectTwitterTags = createSelector(
   [
-    selectMetadataName,
+    selectMetadataTitle,
     selectMetadataDescription,
   ],
-  (name, description) => [
+  (title, description) => [
     {
       name: "twitter:card",
       content: "summary_large_image",
     },
     {
       name: "twitter:text:title",
-      content: name,
+      content: title,
     },
     {
       name: "twitter:description",
@@ -495,6 +502,11 @@ const selectSassError = createSelector(
 const selectSassMode = createSelector(
   [selectSass],
   (sass) => sass.mode
+)
+
+const selectSassPath = createSelector(
+  [selectSass],
+  (sass) => sass.path
 )
 
 const selectSassCode = createSelector(
@@ -517,8 +529,8 @@ const selectSassHash = createSelector(
 )
 
 const selectCssFilename = createSelector(
-  [selectMetadataName, selectSassHash],
-  (name, hash) => `${name}-${hash}.css`
+  [selectMetadataTitle, selectSassHash],
+  (title, hash) => `${title}-${hash}.css`
 )
 
 const selectServerPort = createSelector(
@@ -597,7 +609,7 @@ function HelpCommands(): React.ReactElement {
           description="build static site"
         />
         <HelpCommand
-          name="server"
+          name="serve"
           description="run development server"
         />
       </Box>
@@ -652,7 +664,7 @@ function Server(): React.ReactElement {
 }
 
 function ServerHeader(): React.ReactElement {
-  const name = useAppSelector(selectMetadataName)
+  const name = useAppSelector(selectMetadataTitle)
   return (
     <Box flexDirection="row" height={2} paddingLeft={3} paddingRight={1} alignItems="flex-end">
       <Text color="magenta">{name}</Text>
@@ -731,14 +743,13 @@ function ServerLogs(): React.ReactElement {
 }
 
 function Page(): React.ReactElement {
-  const authorName = useAppSelector(selectMetadataAuthorName)
-  const authorUrl = useAppSelector(selectMetadataAuthorUrl)
+  const author = useAppSelector(selectMetadataAuthor)
+  const homepage = useAppSelector(selectMetadataHomepage)
   const command = useAppSelector(selectCommand)
   const description = useAppSelector(selectMetadataDescription)
-  const homepage = useAppSelector(selectMetadataHomepage)
-  const name = useAppSelector(selectMetadataName)
+  const title = useAppSelector(selectMetadataTitle)
   const opengraph = useAppSelector(selectOpengraphTags)
-  const repositoryUrl = useAppSelector(selectMetadataRepositoryUrl)
+  const source = useAppSelector(selectMetadataSource)
   const twitter = useAppSelector(selectTwitterTags)
 
   let cssFilename = useAppSelector(selectCssFilename)
@@ -1031,7 +1042,7 @@ function Page(): React.ReactElement {
         `
         }} />
         <title>
-          {name}
+          {title}
         </title>
       </head>
       <body data-mode="menu">
@@ -1039,7 +1050,7 @@ function Page(): React.ReactElement {
           <article>
             <header>
               <h1 itemProp="name">
-                {name}
+                {title}
               </h1>
             </header>
             <p itemProp="description">
@@ -1061,20 +1072,20 @@ function Page(): React.ReactElement {
               <path d="M0,24 L256,24" />
             </svg>
 
-            {authorName && authorUrl && (
+            {author && homepage && (
               <p
                 itemProp="creator"
                 itemScope
                 itemType="http://schema.org/Person">
                 <span>by</span>
-                <a href={authorUrl} target="_blank">
-                  <span itemProp="name">{authorName}</span>
+                <a href={homepage} target="_blank">
+                  <span itemProp="name">{author}</span>
                 </a>
               </p>
             )}
 
-            {repositoryUrl && (
-              <a href={repositoryUrl.replace(".git", "")}>
+            {source && (
+              <a href={source}>
                 <svg aria-label="GitHub logo" viewBox="0 0 1024 1024">
                   <path
                     fillRule="evenodd"
@@ -1149,7 +1160,7 @@ function Page(): React.ReactElement {
                   }
                 )
 
-              ${command === "server" && `
+              ${command === "serve" && `
                 document.body.dataset.mode = "load"
                 request.open("GET", "${cssFilename}")
                 request.send()
@@ -1170,7 +1181,7 @@ function runCommand(name: string): Thunk {
       case "build":
         dispatch(runBuild())
         break
-      case "server":
+      case "serve":
         dispatch(runServer())
         break
     }
@@ -1182,14 +1193,6 @@ function runBuild(): Thunk {
     await dispatch(updateSass())
     await dispatch(buildSass())
     await dispatch(buildPage())
-
-    const files = selectMetadataFiles(getState())
-    //files.forEach(file => {
-      //fs.copyFileSync(
-        //file,
-        //`_site/${file}`
-      //)
-    //})
   }
 }
 
@@ -1197,14 +1200,14 @@ function runServer(): Thunk {
   return async (dispatch, getState) => {
     dispatch(server.actions.start())
     const bs = browserSync.create()
-    bs.init({ ...getState().server.options })
+    bs.init({ ...getState().server.options, server: true })
     bs.emitter.on("init", () => {
       dispatch(server.actions.online())
     })
     await dispatch(runBuild())
 
-    const main = selectMetadataMain(getState())
-    const watcher = chokidar.watch([main], {
+    const sassPath = selectSassPath(getState())
+    const watcher = chokidar.watch([sassPath], {
       persistent: true
     })
 
@@ -1259,10 +1262,43 @@ function logOutput(type: LogEntryType, text: string): Thunk {
 
 function updateSass(): Thunk {
   return async (dispatch, getState) => {
-    const main = selectMetadataMain(getState())
-    const data = fs.readFileSync(main, "utf-8")
+    let sassPath = selectSassPath(getState())
+
+    if (!sassPath) {
+      const [,,, target] = process.argv
+      if (typeof target == "string" && target.endsWith(".scss")) {
+        await dispatch(sass.actions.locate(path.resolve(target)))
+        sassPath = target
+      }
+    }
+
+    const data = fs.readFileSync(sassPath, "utf-8")
     await dispatch(sass.actions.update(data))
   }
+}
+
+const modules = {
+  metadata: `
+    $title: "untitled" !default;
+    $description: "untitled" !default;
+    $url: "" !default;
+    $author: "" !default;
+    $homepage: "" !default;
+    $source: "" !default;
+    $opengraph: "" !default;
+
+    body {
+      content: updateMetadata((
+        title: $title,
+        description: $description,
+        url: $url,
+        author: $author,
+        homepage: $homepage,
+        source: $source,
+        opengraph: $opengraph,
+      ));
+    }
+  `,
 }
 
 function buildSass(): Thunk {
@@ -1277,7 +1313,23 @@ function buildSass(): Thunk {
       }
     }
 
-    const options = { functions, logger }
+    const options = {
+      functions,
+      importers: [{
+        canonicalize: url => {
+          if (!url.startsWith("zoetrope:")) return null
+          return new URL(url)
+        },
+        load(canonicalUrl) {
+          return {
+            contents: modules[canonicalUrl.pathname],
+            syntax: "scss",
+          }
+        }
+      }],
+      logger,
+    }
+
     dispatch(sass.actions.build())
     const result = await compileStringAsync(scss, options as any)
     const sassResult: SassResult = {
@@ -1286,8 +1338,6 @@ function buildSass(): Thunk {
     }
     dispatch(sass.actions.result(sassResult))
     const cssFilename = selectCssFilename(getState())
-    // const cssPath = `_site/${cssFilename}`
-    // fs.ensureDirSync("_site")
     fs.writeFileSync(cssFilename, sassResult.css)
   }
 }
