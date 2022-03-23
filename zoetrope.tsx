@@ -412,6 +412,11 @@ const selectMetadataHomepage = createSelector(
   (metadata) => metadata.homepage || ""
 )
 
+const selectMetadataUrl = createSelector(
+  [selectMetadata],
+  (metadata) => metadata.url
+)
+
 const selectMetadataSource = createSelector(
   [selectMetadata],
   (metadata) => metadata.source
@@ -751,10 +756,11 @@ function Page(): React.ReactElement {
   const opengraph = useAppSelector(selectOpengraphTags)
   const source = useAppSelector(selectMetadataSource)
   const twitter = useAppSelector(selectTwitterTags)
+  const url = useAppSelector(selectMetadataUrl)
 
   let cssFilename = useAppSelector(selectCssFilename)
   if (command === "build") {
-    cssFilename = `${homepage.replace(/\/$/, "")}/${cssFilename}`
+    cssFilename = `${url.replace(/\/$/, "")}/${cssFilename}`
   }
 
   return (
