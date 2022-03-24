@@ -559,7 +559,7 @@ function Zoetrope(): React.ReactElement {
     <>
       {command === "help" && <Help />}
       {command === "build" && <Build />}
-      {command === "server" && <Server />}
+      {command === "serve" && <Server />}
     </>
   )
 }
