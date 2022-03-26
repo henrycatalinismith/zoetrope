@@ -1,22 +1,22 @@
 <p align="center">
-  <img
-    alt="zoetrope"
-    src="https://github.com/hendotcat/zoetrope/raw/trunk/zoetrope.svg"
-    height="64"
-  />
+ <img
+  alt="zoetrope"
+  src="https://github.com/hendotcat/zoetrope/raw/trunk/zoetrope.svg"
+  height="64"
+ />
 </p>
 
 <p align="center">
-  <strong>
-    CSS demo build tool
-  </strong>
+ <strong>
+  CSS demo build tool
+ </strong>
 </p>
 
 <p align="center">
-  <img
-    src="https://github.com/hendotcat/zoetrope/actions/workflows/publish.yml/badge.svg"
-    alt="Build status"
-  />
+ <img
+  src="https://github.com/hendotcat/zoetrope/actions/workflows/publish.yml/badge.svg"
+  alt="Build status"
+ />
 </p>
 
 zoetrope is a tool for building CSS demos.
@@ -73,8 +73,8 @@ moment.
 ## Contributing
 
 <p>
-  <a href="https://www.contributor-covenant.org/version/2/0/code_of_conduct/">
-    Contributor Covenant v2.0
+ <a href="https://www.contributor-covenant.org/version/2/0/code_of_conduct/">
+  Contributor Covenant v2.0
  </a>
 </p>
 
