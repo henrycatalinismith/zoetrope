@@ -1311,7 +1311,7 @@ const modules: Record<string, string> = {
  `,
 }
 
-modules.geometry = fs.readFileSync(`${__dirname}/modules/_geometry.scss`, "utf-8")
+modules.geometry = fs.readFileSync(`${__dirname}/_geometry.scss`, "utf-8")
 
 function buildSass(): Thunk {
  return async (dispatch, getState) => {
