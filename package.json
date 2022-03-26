@@ -1,43 +1,43 @@
 {
-  "name": "@hendotcat/zoetrope",
-  "description": "CSS demo build tool",
-  "version": "4.1.0",
-  "license": "MIT",
-  "author": {
-    "name": "Henry Catalini Smith",
-    "email": "henry@catalinismith.com",
-    "url": "https://hen.cat/"
-  },
-  "bin": {
-    "zoetrope": "./zoetrope.js"
-  },
-  "dependencies": {
-    "@reduxjs/toolkit": "^1.5.1",
-    "@types/react-dom": "^17.0.3",
-    "browser-sync": "^2.26.14",
-    "chokidar": "^3.5.1",
-    "create-html-element": "^3.0.0",
-    "fs-extra": "^10.0.0",
-    "ink": "^3.0.8",
-    "lodash": "^4.17.21",
-    "react": "^16.14.0",
-    "react-dom": "^16.14.0",
-    "react-redux": "^7.2.4",
-    "sass": "^1.49.9"
-  },
-  "scripts": {
-    "build": "tsc && chmod +x zoetrope.js"
-  },
-  "devDependencies": {
-    "@types/browser-sync": "^2.26.1",
-    "@types/fs-extra": "^9.0.11",
-    "@types/node": "^15.0.2",
-    "@types/sass": "^1.16.0",
-    "typescript": "^4.2.4"
-  },
-  "files": [
-    "modules/*.scss",
-    "zoetrope.d.ts",
-    "zoetrope.js"
-  ]
+ "name": "@hendotcat/zoetrope",
+ "description": "CSS demo build tool",
+ "version": "4.1.0",
+ "license": "MIT",
+ "author": {
+  "name": "Henry Catalini Smith",
+  "email": "henry@catalinismith.com",
+  "url": "https://hen.cat/"
+ },
+ "bin": {
+  "zoetrope": "./zoetrope.js"
+ },
+ "dependencies": {
+  "@reduxjs/toolkit": "^1.5.1",
+  "@types/react-dom": "^17.0.3",
+  "browser-sync": "^2.26.14",
+  "chokidar": "^3.5.1",
+  "create-html-element": "^3.0.0",
+  "fs-extra": "^10.0.0",
+  "ink": "^3.0.8",
+  "lodash": "^4.17.21",
+  "react": "^16.14.0",
+  "react-dom": "^16.14.0",
+  "react-redux": "^7.2.4",
+  "sass": "^1.49.9"
+ },
+ "scripts": {
+  "build": "tsc && chmod +x zoetrope.js"
+ },
+ "devDependencies": {
+  "@types/browser-sync": "^2.26.1",
+  "@types/fs-extra": "^9.0.11",
+  "@types/node": "^15.0.2",
+  "@types/sass": "^1.16.0",
+  "typescript": "^4.2.4"
+ },
+ "files": [
+  "modules/*.scss",
+  "zoetrope.d.ts",
+  "zoetrope.js"
+ ]
 }
