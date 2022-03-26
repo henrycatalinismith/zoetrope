@@ -1287,7 +1287,7 @@ function updateSass(): Thunk {
   }
 }
 
-const modules = {
+const modules: Record<string, string> = {
   metadata: `
     $title: "untitled" !default;
     $description: "untitled" !default;
@@ -1310,6 +1310,8 @@ const modules = {
     }
   `,
 }
+
+modules.geometry = fs.readFileSync(`${__dirname}/modules/_geometry.scss`, "utf-8")
 
 function buildSass(): Thunk {
   return async (dispatch, getState) => {
