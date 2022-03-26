@@ -23,7 +23,7 @@ import {
   useSelector,
 } from "react-redux/lib/alternate-renderers"
 import { render, Box, Text, Newline, useApp } from "ink"
-import { compileStringAsync, SassNumber, SassString, CustomFunction, render as renderSass, types as sassTypes } from "sass"
+import { compileStringAsync, SassNumber, SassString, CustomFunction, render as renderSass, types as sassTypes, CompileResult } from "sass"
 import { name, description, version } from "./package.json"
 import { URL } from "url"
 
@@ -319,7 +319,7 @@ function stringifyAction(action: any, state: RootState): string {
       return `run ${action.payload}`
 
     case "metadata/update":
-      return `hello ${JSON.stringify(selectMetadata(state))}`
+      return `metadata ${JSON.stringify(selectMetadata(state))}`
 
     case "page/build":
       return `building index.html`
@@ -734,10 +734,14 @@ function ServerLogs(): React.ReactElement {
               color = "magenta"
             }
             return (
-              <Box key={i}>
-                <Text color="yellow">{entry.date}</Text>
-                <Text> </Text>
-                <Text color={color}>{entry.text}</Text>
+              <Box key={i} height={1}>
+                <Box minWidth={24}>
+                  <Text color="yellow">{entry.date}</Text>
+                </Box>
+                <Box minWidth={1}>
+                  <Text> </Text>
+                </Box>
+                <Text color={color} wrap="truncate">{entry.text}</Text>
               </Box>
             )
           })}
@@ -1337,7 +1341,14 @@ function buildSass(): Thunk {
     }
 
     dispatch(sass.actions.build())
-    const result = await compileStringAsync(scss, options as any)
+
+    let result: CompileResult
+    try {
+      result = await compileStringAsync(scss, options as any)
+    } catch (e) {
+      return dispatch(sass.actions.error(e.toString()))
+    }
+
     const sassResult: SassResult = {
       css: result.css.toString(),
       sourceMap: result.sourceMap?.toString(),
