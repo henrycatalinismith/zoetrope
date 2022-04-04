@@ -1200,6 +1200,11 @@ function runCommand(name: string): Thunk {
 
 function runBuild(): Thunk {
  return async (dispatch, getState) => {
+  const css = `${process.cwd()}/${selectCssFilename(getState())}`
+  if (fs.existsSync(css)) {
+   fs.rm(css)
+  }
+
   await dispatch(updateSass())
   await dispatch(buildSass())
   await dispatch(buildPage())
@@ -1315,6 +1320,7 @@ modules.geometry = fs.readFileSync(`${__dirname}/_geometry.scss`, "utf-8")
 
 function buildSass(): Thunk {
  return async (dispatch, getState) => {
+
   const scss = selectSassCode(getState())
   const logger = {
    debug: (message, span) => {
