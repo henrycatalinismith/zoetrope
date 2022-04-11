@@ -1,3 +1,5 @@
+@use "sass:math";
+
 @function xy($x, $y) {
  @return (x: $x, y: $y);
 }
@@ -44,6 +46,39 @@
   $p: append($p, xy($cx - $y, $cy + $x));
   $p: append($p, xy($cx + $y, $cy - $x));
   $p: append($p, xy($cx - $y, $cy - $x));
+ }
+
+ @return $p;
+}
+
+@function line($src, $dst) {
+ $p: ();
+ $x0: x($src);
+ $x1: x($dst);
+ $y0: y($src);
+ $y1: y($dst);
+ $dx: math.abs($x1 - $x0);
+ $dy: math.abs($y1 - $y0);
+ $sx: if($y0 < $y1, 1, -1);
+ $sy: if($x0 < $x1, 1, -1);
+ $err: math.div(if($dx > $dy, $dx, $dy * -1), 2);
+
+ $p: append($p, xy($x0, $y0));
+
+ @while ($x0 != $x1 and $y0 != $y1) {
+  $e2: $err;
+
+  @if $e2 > $dx -1 {
+   $err: $err - $dy;
+   $x0: $x0 + $sx;
+  }
+
+  @if ($e2 < $dy) {
+   $err: $err + $dx;
+   $y0: $y0 + $sy;
+  }
+
+  $p: append($p, xy($x0, $y0));
  }
 
  @return $p;
