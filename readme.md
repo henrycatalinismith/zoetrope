@@ -1,10 +1,10 @@
-<p align="center">
+<h1 align="center">
  <img
   alt="zoetrope"
-  src="https://github.com/hendotcat/zoetrope/raw/trunk/zoetrope.svg"
+  src="https://github.com/henrycatalinismith/zoetrope/raw/trunk/zoetrope.svg"
   height="64"
  />
-</p>
+</h1>
 
 <p align="center">
  <strong>
@@ -14,7 +14,7 @@
 
 <p align="center">
  <img
-  src="https://github.com/hendotcat/zoetrope/actions/workflows/publish.yml/badge.svg"
+  src="https://github.com/henrycatalinismith/zoetrope/actions/workflows/publish.yml/badge.svg"
   alt="Build status"
  />
 </p>
@@ -46,7 +46,7 @@ But that's not really the goal here!
 ## Installation
 
 ```
-yarn add -D @hendotcat/zoetrope
+yarn add -D @henrycatalinismith/zoetrope
 ```
 
 ## Usage
@@ -83,4 +83,4 @@ moment.
 MIT
 
 [PICO-8]: https://www.lexaloffle.com/pico-8.php
-[doomfire]: https://github.com/hendotcat/doomfire/blob/trunk/package.json
+[doomfire]: https://github.com/henrycatalinismith/doomfire/blob/trunk/package.json
