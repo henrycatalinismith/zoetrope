@@ -1,0 +1,12 @@
+@use "zoetrope:metadata" with (
+  $title: "metadata",
+  $description: "This is how to configure metadata for a demo.",
+  $url: "https://example.com/url",
+  $author: "zoetrope",
+  $homepage: "https://example.com/homepage",
+  $source: "https://example.com/source"
+);
+
+body {
+  background: green;
+}

@@ -1,85 +1,85 @@
 @use "sass:math";
 
 @function xy($x, $y) {
- @return (x: $x, y: $y);
+  @return (x: $x, y: $y);
 }
 
 @function x($xy) {
- @return map-get($xy, x);
+  @return map-get($xy, x);
 }
 
 @function y($xy) {
- @return map-get($xy, y);
+  @return map-get($xy, y);
 }
 
 @function circle($c, $r) {
- $f: 1 - $r;
- $ddF_x: 0;
- $ddF_y: -2 * $r;
- $x: 0;
- $y: $r;
- $p: ();
- $cx: x($c);
- $cy: y($c);
+  $f: 1 - $r;
+  $ddF_x: 0;
+  $ddF_y: -2 * $r;
+  $x: 0;
+  $y: $r;
+  $p: ();
+  $cx: x($c);
+  $cy: y($c);
 
- $p: append($p, xy($cx, $cy + $r));
- $p: append($p, xy($cx, $cy - $r));
- $p: append($p, xy($cx + $r, $cy));
- $p: append($p, xy($cx - $r, $cy));
+  $p: append($p, xy($cx, $cy + $r));
+  $p: append($p, xy($cx, $cy - $r));
+  $p: append($p, xy($cx + $r, $cy));
+  $p: append($p, xy($cx - $r, $cy));
 
- @while $x < $y {
-  @if $f >= 0 {
-   $y: $y - 1;
-   $ddF_y: $ddF_y + 2;
-   $f: $f + $ddF_y;
+  @while $x < $y {
+    @if $f >= 0 {
+      $y: $y - 1;
+      $ddF_y: $ddF_y + 2;
+      $f: $f + $ddF_y;
+    }
+    $x: $x + 1;
+    $ddF_x: $ddF_x + 2;
+    $f: $f + $ddF_x + 1;
+
+    $p: append($p, xy($cx + $x, $cy + $y));
+    $p: append($p, xy($cx - $x, $cy + $y));
+    $p: append($p, xy($cx + $x, $cy - $y));
+    $p: append($p, xy($cx - $x, $cy - $y));
+
+    $p: append($p, xy($cx + $y, $cy + $x));
+    $p: append($p, xy($cx - $y, $cy + $x));
+    $p: append($p, xy($cx + $y, $cy - $x));
+    $p: append($p, xy($cx - $y, $cy - $x));
   }
-  $x: $x + 1;
-  $ddF_x: $ddF_x + 2;
-  $f: $f + $ddF_x + 1;
 
-  $p: append($p, xy($cx + $x, $cy + $y));
-  $p: append($p, xy($cx - $x, $cy + $y));
-  $p: append($p, xy($cx + $x, $cy - $y));
-  $p: append($p, xy($cx - $x, $cy - $y));
-
-  $p: append($p, xy($cx + $y, $cy + $x));
-  $p: append($p, xy($cx - $y, $cy + $x));
-  $p: append($p, xy($cx + $y, $cy - $x));
-  $p: append($p, xy($cx - $y, $cy - $x));
- }
-
- @return $p;
+  @return $p;
 }
 
 @function line($src, $dst) {
- $p: ();
- $x0: x($src);
- $x1: x($dst);
- $y0: y($src);
- $y1: y($dst);
- $dx: math.abs($x1 - $x0);
- $dy: math.abs($y1 - $y0);
- $sx: if($y0 < $y1, 1, -1);
- $sy: if($x0 < $x1, 1, -1);
- $err: math.div(if($dx > $dy, $dx, $dy * -1), 2);
-
- $p: append($p, xy($x0, $y0));
-
- @while ($x0 != $x1 and $y0 != $y1) {
-  $e2: $err;
-
-  @if $e2 > $dx -1 {
-   $err: $err - $dy;
-   $x0: $x0 + $sx;
-  }
-
-  @if ($e2 < $dy) {
-   $err: $err + $dx;
-   $y0: $y0 + $sy;
-  }
+  $p: ();
+  $x0: x($src);
+  $x1: x($dst);
+  $y0: y($src);
+  $y1: y($dst);
+  $dx: math.abs($x1 - $x0);
+  $dy: math.abs($y1 - $y0);
+  $sx: if($y0 < $y1, 1, -1);
+  $sy: if($x0 < $x1, 1, -1);
+  $err: math.div(if($dx > $dy, $dx, $dy * -1), 2);
 
   $p: append($p, xy($x0, $y0));
- }
 
- @return $p;
+  @while ($x0 != $x1 and $y0 != $y1) {
+    $e2: $err;
+
+    @if $e2 > $dx -1 {
+      $err: $err - $dy;
+      $x0: $x0 + $sx;
+    }
+
+    @if ($e2 < $dy) {
+      $err: $err + $dx;
+      $y0: $y0 + $sy;
+    }
+
+    $p: append($p, xy($x0, $y0));
+  }
+
+  @return $p;
 }
