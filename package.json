@@ -17,7 +17,7 @@
     "browser-sync": "^2.26.14",
     "chokidar": "^3.5.1",
     "create-html-element": "^3.0.0",
-    "fs-extra": "^10.0.0",
+    "fs-extra": "^11.2.0",
     "ink": "^3.0.8",
     "lodash": "^4.17.21",
     "react": "^16.14.0",
@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@types/browser-sync": "^2.26.1",
-    "@types/fs-extra": "^9.0.11",
+    "@types/fs-extra": "^11.0.4",
     "@types/node": "^15.0.2",
     "@types/sass": "^1.16.0",
     "typescript": "^5.4.2"
