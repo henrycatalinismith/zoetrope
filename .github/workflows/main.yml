@@ -1,7 +1,7 @@
 on:
- push:
-   branches:
-     - main
+  push:
+    branches:
+      - main
 
 jobs:
   publish:
@@ -13,6 +13,7 @@ jobs:
           node-version: 20
       - run: yarn
       - run: yarn build
+      - run: yarn playwright test
       - uses: JS-DevTools/npm-publish@v3
         with:
           access: public
@@ -23,4 +24,3 @@ jobs:
           access: public
           registry: https://npm.pkg.github.com/
           token: ${{ secrets.GH_TOKEN }}
-

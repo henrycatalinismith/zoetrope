@@ -22,7 +22,7 @@ import {
   useDispatch,
   useSelector,
 } from "react-redux/lib/alternate-renderers";
-import { render, Box, Text, Newline, useApp } from "ink";
+import { render, Box, Text, Newline } from "ink";
 import {
   compileStringAsync,
   SassNumber,
@@ -34,6 +34,37 @@ import {
 } from "sass";
 import { name, description, version } from "./package.json";
 import { URL } from "url";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
+
+const argv = yargs(hideBin(process.argv))
+  .command("help", "print this help text")
+  .command("serve <filename>", "run development server", (yargs) => {
+    return yargs
+      .positional("filename", {
+        describe: "scss file to serve",
+      })
+      .option("cleanup", {
+        describe: "remove generated files on exit",
+        default: true,
+      })
+      .option("port", {
+        describe: "port to listen on",
+        default: 8080,
+      })
+      .boolean("cleanup")
+      .demandOption(["filename"]);
+  })
+  .command("build <filename>", "build site", (yargs) => {
+    return yargs
+      .positional("filename", {
+        describe: "scss file to build",
+      })
+      .demandOption(["filename"]);
+  })
+  .strictCommands()
+  .demandCommand(1)
+  .parse();
 
 type LogEntryType = "action" | "debug" | "warn";
 
@@ -79,7 +110,7 @@ interface SassState {
   mode: SassModes;
 }
 
-type ServerMode = "offline" | "starting" | "online";
+type ServerMode = "offline" | "starting" | "online" | "stopping";
 
 interface ServerState {
   mode: ServerMode;
@@ -303,6 +334,9 @@ const server = createSlice({
     online: (state) => {
       state.mode = "online";
     },
+    stop: (state) => {
+      state.mode = "stopping";
+    },
   },
 });
 
@@ -354,6 +388,9 @@ function stringifyAction(action: any, state: RootState): string {
 
     case "server/start":
       return `server starting on port ${selectServerPort(state)}`;
+
+    case "server/stop":
+      return `server stopping`;
   }
   return action.type;
 }
@@ -376,6 +413,11 @@ const store = configureStore({
         store.dispatch(
           logOutput("action", stringifyAction(action, store.getState()))
         );
+        if (action.type === "server/stop") {
+          const css = selectCssFilename(store.getState());
+          fs.removeSync(css);
+          fs.removeSync("index.html");
+        }
       }
     }),
 });
@@ -523,6 +565,11 @@ const selectCssFilename = createSelector(
   (title, hash) => `${title}-${hash}.css`
 );
 
+const selectServerMode = createSelector(
+  [selectServer],
+  (server) => server.mode
+);
+
 const selectServerPort = createSelector(
   [selectServer],
   (server) => server.options.port
@@ -539,7 +586,16 @@ const selectTerminalWidth = createSelector(
 );
 
 function Zoetrope(): React.ReactElement {
+  // const { exit } = useApp();
+  const serverMode = useAppSelector(selectServerMode);
   const command = useAppSelector((state) => state.command);
+
+  React.useEffect(() => {
+    if (serverMode === "stopping") {
+      // exit();
+    }
+  }, [serverMode]);
+
   return (
     <>
       {command === "help" && <Help />}
@@ -1278,7 +1334,7 @@ function updateSass(): Thunk {
     let sassPath = selectSassPath(getState());
 
     if (!sassPath) {
-      const [, , , target] = process.argv;
+      const target = argv.filename;
       if (typeof target == "string" && target.endsWith(".scss")) {
         await dispatch(sass.actions.locate(path.resolve(target)));
         sassPath = target;
@@ -1371,10 +1427,18 @@ function buildSass(): Thunk {
   };
 }
 
-store.dispatch(runCommand(process.argv[2]));
+store.dispatch(runCommand(argv._[0]));
+
+if (store.getState().command === "serve") {
+  process.on("SIGINT", () => {
+    store.dispatch(server.actions.stop());
+    process.exit(0);
+  });
+}
 
 render(
   <Provider store={store}>
     <Zoetrope />
-  </Provider>
+  </Provider>,
+  { exitOnCtrlC: false }
 );
