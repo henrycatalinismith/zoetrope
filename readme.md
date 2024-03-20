@@ -1,9 +1,5 @@
 <h1 align="center">
- <img
-  alt="zoetrope"
-  src="https://github.com/henrycatalinismith/zoetrope/raw/trunk/zoetrope.svg"
-  height="64"
- />
+  zoetrope
 </h1>
 
 <p align="center">
@@ -14,7 +10,7 @@
 
 <p align="center">
  <img
-  src="https://github.com/henrycatalinismith/zoetrope/actions/workflows/publish.yml/badge.svg"
+  src="https://github.com/henrycatalinismith/zoetrope/actions/workflows/main.yml/badge.svg"
   alt="Build status"
  />
 </p>
