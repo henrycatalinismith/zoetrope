@@ -14,7 +14,7 @@
   "dependencies": {
     "@reduxjs/toolkit": "^1.5.1",
     "@types/react-dom": "^17.0.3",
-    "browser-sync": "^2.26.14",
+    "browser-sync": "^3.0.2",
     "chokidar": "^3.5.1",
     "create-html-element": "^3.0.0",
     "fs-extra": "^11.2.0",
@@ -29,9 +29,9 @@
     "build": "tsc && chmod +x zoetrope.js"
   },
   "devDependencies": {
-    "@types/browser-sync": "^2.26.1",
+    "@types/browser-sync": "^2.29.0",
     "@types/fs-extra": "^11.0.4",
-    "@types/node": "^15.0.2",
+    "@types/node": "^20.11.30",
     "@types/sass": "^1.45.0",
     "typescript": "^5.4.2"
   },
