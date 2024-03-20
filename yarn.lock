@@ -29,11 +29,12 @@
     "@types/serve-static" "*"
     chokidar "^2.1.2"
 
-"@types/fs-extra@^9.0.11":
-  version "9.0.11"
-  resolved "https://registry.yarnpkg.com/@types/fs-extra/-/fs-extra-9.0.11.tgz#8cc99e103499eab9f347dbc6ca4e99fb8d2c2b87"
-  integrity sha512-mZsifGG4QeQ7hlkhO56u7zt/ycBgGxSVsFI/6lGTU34VtwkiqrrSDgw0+ygs8kFGWcXnFQWMrzF2h7TtDFNixA==
+"@types/fs-extra@^11.0.4":
+  version "11.0.4"
+  resolved "https://registry.yarnpkg.com/@types/fs-extra/-/fs-extra-11.0.4.tgz#e16a863bb8843fba8c5004362b5a73e17becca45"
+  integrity sha512-yTbItCNreRooED33qjunPthRcSjERP1r4MqCZc7wv0u2sUkzTFp45tgUfS5+r7FrZPdmCCNflLhVSP/o+SemsQ==
   dependencies:
+    "@types/jsonfile" "*"
     "@types/node" "*"
 
 "@types/hoist-non-react-statics@^3.3.0":
@@ -43,6 +44,13 @@
   dependencies:
     "@types/react" "*"
     hoist-non-react-statics "^3.3.0"
+
+"@types/jsonfile@*":
+  version "6.1.4"
+  resolved "https://registry.yarnpkg.com/@types/jsonfile/-/jsonfile-6.1.4.tgz#614afec1a1164e7d670b4a7ad64df3e7beb7b702"
+  integrity sha512-D5qGUYwjvnNNextdU59/+fI+spnwtTFmyQP0h+PfIOSkNfpU6AOICUOkm4i0OnSk+NyjdPJrxCDro0sJsWlRpQ==
+  dependencies:
+    "@types/node" "*"
 
 "@types/micromatch@^2":
   version "2.3.30"
@@ -97,12 +105,12 @@
     "@types/scheduler" "*"
     csstype "^3.0.2"
 
-"@types/sass@^1.16.0":
-  version "1.16.0"
-  resolved "https://registry.yarnpkg.com/@types/sass/-/sass-1.16.0.tgz#b41ac1c17fa68ffb57d43e2360486ef526b3d57d"
-  integrity sha512-2XZovu4NwcqmtZtsBR5XYLw18T8cBCnU2USFHTnYLLHz9fkhnoEMoDsqShJIOFsFhn5aJHjweiUUdTrDGujegA==
+"@types/sass@^1.45.0":
+  version "1.45.0"
+  resolved "https://registry.yarnpkg.com/@types/sass/-/sass-1.45.0.tgz#a949eb1e080ff34715e6c2040357b940bffb89bb"
+  integrity sha512-jn7qwGFmJHwUSphV8zZneO3GmtlgLsmhs/LQyVvQbIIa+fzGMUiHI4HXJZL3FT8MJmgXWbLGiVVY7ElvHq6vDA==
   dependencies:
-    "@types/node" "*"
+    sass "*"
 
 "@types/scheduler@*":
   version "0.16.1"
@@ -954,10 +962,10 @@ fs-extra@3.0.1:
     jsonfile "^3.0.0"
     universalify "^0.1.0"
 
-fs-extra@^10.0.0:
-  version "10.0.0"
-  resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-10.0.0.tgz#9ff61b655dde53fb34a82df84bb214ce802e17c1"
-  integrity sha512-C5owb14u9eJwizKGdchcDUQeFtlSHHthBk8pbX9Vc1PFZrLombudjDnNns88aYslCyF6IY5SUw3Roz6xShcEIQ==
+fs-extra@^11.2.0:
+  version "11.2.0"
+  resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-11.2.0.tgz#e70e17dfad64232287d01929399e0ea7c86b0e5b"
+  integrity sha512-PmDi3uwK5nFuXh7XDTlVnS17xJS7vW36is2+w3xcv8SVxiB4NyATf4ctkVY5bkSjX0Y4nbvZCq1/EjtEyr9ktw==
   dependencies:
     graceful-fs "^4.2.0"
     jsonfile "^6.0.1"
@@ -1927,10 +1935,10 @@ safe-regex@^1.1.0:
   resolved "https://registry.yarnpkg.com/safer-buffer/-/safer-buffer-2.1.2.tgz#44fa161b0187b9549dd84bb91802f9bd8385cd6a"
   integrity sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==
 
-sass@^1.49.9:
-  version "1.49.9"
-  resolved "https://registry.yarnpkg.com/sass/-/sass-1.49.9.tgz#b15a189ecb0ca9e24634bae5d1ebc191809712f9"
-  integrity sha512-YlYWkkHP9fbwaFRZQRXgDi3mXZShslVmmo+FVK3kHLUELHHEYrCmL1x6IUjC7wLS6VuJSAFXRQS/DxdsC4xL1A==
+sass@*, sass@^1.72.0:
+  version "1.72.0"
+  resolved "https://registry.yarnpkg.com/sass/-/sass-1.72.0.tgz#5b9978943fcfb32b25a6a5acb102fc9dabbbf41c"
+  integrity sha512-Gpczt3WA56Ly0Mn8Sl21Vj94s1axi9hDIzDFn9Ph9x3C3p4nNyvsqJoQyVXKou6cBlfFWEgRW4rT8Tb4i3XnVA==
   dependencies:
     chokidar ">=3.0.0 <4.0.0"
     immutable "^4.0.0"
