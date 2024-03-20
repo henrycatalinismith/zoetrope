@@ -1,12 +1,12 @@
 {
   "name": "@henrycatalinismith/zoetrope",
   "description": "CSS demo build tool",
-  "version": "4.2.0",
+  "version": "5.0.0",
   "license": "MIT",
   "author": {
     "name": "Henry Catalini Smith",
     "email": "henry@catalinismith.com",
-    "url": "https://hen.cat/"
+    "url": "https://henry.catalinismith.com/"
   },
   "bin": {
     "zoetrope": "./zoetrope.js"
@@ -29,11 +29,13 @@
     "build": "tsc && chmod +x zoetrope.js"
   },
   "devDependencies": {
+    "@playwright/test": "^1.42.1",
     "@types/browser-sync": "^2.29.0",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^20.11.30",
     "@types/sass": "^1.45.0",
-    "typescript": "^5.4.2"
+    "typescript": "^5.4.2",
+    "yargs": "^17.7.2"
   },
   "files": [
     "*.scss",
