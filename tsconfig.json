@@ -1,24 +1,20 @@
 {
- "compilerOptions": {
-  "allowJs": true,
-  "baseUrl": "./",
-  "declaration": true,
-  "esModuleInterop": true,
-  "ignoreDeprecations": "5.0",
-  "lib": ["esnext"],
-  "moduleResolution": "node",
-  "module": "commonjs",
-  "noImplicitUseStrict": true,
-  "jsx": "react",
-  "outDir": ".",
-  "resolveJsonModule": true,
-  "skipLibCheck": true,
-  "target": "es5"
- },
- "exclude": [
-  "node_modules"
- ],
- "include": [
-  "./zoetrope.tsx",
- ]
+  "compilerOptions": {
+    "allowJs": true,
+    "baseUrl": "./",
+    "declaration": true,
+    "esModuleInterop": true,
+    "ignoreDeprecations": "5.0",
+    "lib": ["esnext"],
+    "moduleResolution": "node",
+    "module": "commonjs",
+    "noImplicitUseStrict": true,
+    "jsx": "react",
+    "outDir": ".",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "target": "es5"
+  },
+  "exclude": ["node_modules"],
+  "include": ["./zoetrope.tsx"]
 }
