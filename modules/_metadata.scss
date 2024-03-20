@@ -1,0 +1,19 @@
+$title: "untitled" !default;
+$description: "untitled" !default;
+$url: "" !default;
+$author: "" !default;
+$homepage: "" !default;
+$source: "" !default;
+
+body {
+  content: updateMetadata(
+    (
+      title: $title,
+      description: $description,
+      url: $url,
+      author: $author,
+      homepage: $homepage,
+      source: $source,
+    )
+  );
+}
