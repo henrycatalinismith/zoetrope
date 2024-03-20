@@ -14,7 +14,7 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
         baseURL: "http://127.0.0.1:8080",
       },
-      testMatch: "test/red/red.ts",
+      testMatch: "tests/red/red.ts",
     },
     {
       name: "metadata",
@@ -22,18 +22,18 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
         baseURL: "http://127.0.0.1:8081",
       },
-      testMatch: "test/metadata/metadata.ts",
+      testMatch: "tests/metadata/metadata.ts",
     },
   ],
   webServer: [
     {
       command: `node ${js} --port 8080 --ui false serve ./red.scss`,
-      cwd: "./test/red",
+      cwd: "./tests/red",
       url: "http://127.0.0.1:8080",
     },
     {
       command: `node ${js} --skipMenu false --port 8081 --ui false serve metadata.scss`,
-      cwd: "./test/metadata",
+      cwd: "./tests/metadata",
       url: "http://127.0.0.1:8081",
     },
   ],

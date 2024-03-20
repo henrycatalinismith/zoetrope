@@ -1334,29 +1334,17 @@ function updateSass(): Thunk {
   };
 }
 
-const modules: Record<string, string> = {
-  metadata: `
-  $title: "untitled" !default;
-  $description: "untitled" !default;
-  $url: "" !default;
-  $author: "" !default;
-  $homepage: "" !default;
-  $source: "" !default;
+const modules: Record<string, string> = {};
 
-  body {
-   content: updateMetadata((
-    title: $title,
-    description: $description,
-    url: $url,
-    author: $author,
-    homepage: $homepage,
-    source: $source,
-   ));
-  }
- `,
-};
+modules.geometry = fs.readFileSync(
+  `${__dirname}/modules/_geometry.scss`,
+  "utf-8"
+);
 
-modules.geometry = fs.readFileSync(`${__dirname}/_geometry.scss`, "utf-8");
+modules.metadata = fs.readFileSync(
+  `${__dirname}/modules/_metadata.scss`,
+  "utf-8"
+);
 
 function buildSass(): Thunk {
   return async (dispatch, getState) => {
