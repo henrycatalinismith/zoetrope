@@ -1,7 +1,7 @@
 const { test, expect, beforeEach } = require("@playwright/test");
 
 test("metadata", async ({ page }) => {
-  await page.goto("/metadata.html");
+  await page.goto("/");
 
   const name = page.locator("h1[itemprop='name']");
   const description = page.locator("[itemprop='description']");

@@ -1,7 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const js = "../../zoetrope.js";
+
 export default defineConfig({
-  testDir: "./",
+  // testDir: "./",
   fullyParallel: true,
   workers: 1,
   preserveOutput: "failures-only",
@@ -12,7 +14,7 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
         baseURL: "http://127.0.0.1:8080",
       },
-      testMatch: "red.spec.ts",
+      testMatch: "test/red/red.ts",
     },
     {
       name: "metadata",
@@ -20,18 +22,18 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
         baseURL: "http://127.0.0.1:8081",
       },
-      testMatch: "metadata.spec.ts",
+      testMatch: "test/metadata/metadata.ts",
     },
   ],
   webServer: [
     {
-      command:
-        "node zoetrope.js --entrypoint red.html --port 8080 serve red.scss",
+      command: `node ${js} --port 8080 --ui false serve ./red.scss`,
+      cwd: "./test/red",
       url: "http://127.0.0.1:8080",
     },
     {
-      command:
-        "node zoetrope.js --entrypoint metadata.html --skipMenu false --port 8081 serve metadata.scss",
+      command: `node ${js} --skipMenu false --port 8081 --ui false serve metadata.scss`,
+      cwd: "./test/metadata",
       url: "http://127.0.0.1:8081",
     },
   ],
