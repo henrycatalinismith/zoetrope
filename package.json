@@ -1,7 +1,7 @@
 {
   "name": "@henrycatalinismith/zoetrope",
   "description": "CSS demo build tool",
-  "version": "6.0.0",
+  "version": "7.0.0",
   "license": "MIT",
   "author": {
     "name": "Henry Catalini Smith",
@@ -26,7 +26,8 @@
     "sass": "^1.72.0"
   },
   "scripts": {
-    "build": "tsc && chmod +x zoetrope.js"
+    "build": "tsc && chmod +x zoetrope.js",
+    "test": "yarn playwright test"
   },
   "devDependencies": {
     "@playwright/test": "^1.42.1",

@@ -60,8 +60,13 @@ const argv = yargs(hideBin(process.argv))
         describe: "start immediately without menu",
         default: true,
       })
+      .option("ui", {
+        describe: "render instead of printing straight to stdout",
+        default: true,
+      })
       .boolean("cleanup")
       .boolean("skipMenu")
+      .boolean("ui")
       .demandOption(["filename"]);
   })
   .command("build <filename>", "build site", (yargs) => {
@@ -426,6 +431,8 @@ const store = configureStore({
         store.dispatch(
           logOutput("action", stringifyAction(action, store.getState()))
         );
+        process.stdout.write(stringifyAction(action, store.getState()));
+        process.stdout.write("\n");
         if (action.type === "server/stop") {
           const css = selectCssFilename(store.getState());
           fs.removeSync(css);
@@ -1415,9 +1422,11 @@ if (store.getState().command === "serve") {
   });
 }
 
-render(
-  <Provider store={store}>
-    <Zoetrope />
-  </Provider>,
-  { exitOnCtrlC: false }
-);
+if (store.getState().command === "serve" && argv.ui) {
+  render(
+    <Provider store={store}>
+      <Zoetrope />
+    </Provider>,
+    { exitOnCtrlC: false }
+  );
+}

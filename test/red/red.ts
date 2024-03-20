@@ -1,7 +1,7 @@
 const { test, expect, beforeEach } = require("@playwright/test");
 
 test("red background", async ({ page }) => {
-  await page.goto("/red.html");
+  await page.goto("/");
 
   const body = page.locator("body");
   const loading = page.locator("[aria-label='loading']");
