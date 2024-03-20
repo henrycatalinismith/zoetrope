@@ -23,7 +23,7 @@
     "react": "^16.14.0",
     "react-dom": "^16.14.0",
     "react-redux": "^7.2.4",
-    "sass": "^1.49.9"
+    "sass": "^1.72.0"
   },
   "scripts": {
     "build": "tsc && chmod +x zoetrope.js"
@@ -32,7 +32,7 @@
     "@types/browser-sync": "^2.26.1",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^15.0.2",
-    "@types/sass": "^1.16.0",
+    "@types/sass": "^1.45.0",
     "typescript": "^5.4.2"
   },
   "files": [
