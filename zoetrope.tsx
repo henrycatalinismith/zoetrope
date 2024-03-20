@@ -48,11 +48,20 @@ const argv = yargs(hideBin(process.argv))
         describe: "remove generated files on exit",
         default: true,
       })
+      .option("entrypoint", {
+        describe: "the HTML file to build & serve",
+        default: "index.html",
+      })
       .option("port", {
         describe: "port to listen on",
         default: 8080,
       })
+      .option("skipMenu", {
+        describe: "start immediately without menu",
+        default: true,
+      })
       .boolean("cleanup")
+      .boolean("skipMenu")
       .demandOption(["filename"]);
   })
   .command("build <filename>", "build site", (yargs) => {
@@ -85,7 +94,6 @@ interface MetadataState {
   author: string;
   homepage: string;
   source: string;
-  opengraph: string;
 }
 
 type PageModes = "idle" | "busy";
@@ -251,10 +259,14 @@ const metadata = createSlice({
     author: "",
     homepage: "",
     source: "",
-    opengraph: "",
   },
   reducers: {
-    update: (state, action: PayloadAction<MetadataState>) => action.payload,
+    update: (state, action: PayloadAction<Partial<MetadataState>>) => {
+      return {
+        ...state,
+        ...action.payload,
+      };
+    },
   },
 });
 
@@ -328,8 +340,9 @@ const server = createSlice({
   name: "server",
   initialState: initialServerState,
   reducers: {
-    start: (state) => {
+    start: (state, action: PayloadAction<number>) => {
       state.mode = "starting";
+      state.options.port = action.payload;
     },
     online: (state) => {
       state.mode = "online";
@@ -416,7 +429,7 @@ const store = configureStore({
         if (action.type === "server/stop") {
           const css = selectCssFilename(store.getState());
           fs.removeSync(css);
-          fs.removeSync("index.html");
+          fs.removeSync(argv.entrypoint);
         }
       }
     }),
@@ -437,9 +450,8 @@ const selectTerminal = ({ terminal }): TerminalState => terminal;
 
 const selectLogEntries = createSelector([selectLog], (log) => log.entries);
 
-const selectLogMaxDate = createSelector(
-  [selectLogEntries],
-  (entries) => entries[entries.length - 1].date
+const selectLogMaxDate = createSelector([selectLogEntries], (entries) =>
+  entries.length > 0 ? entries[entries.length - 1].date : ""
 );
 
 const selectMetadataTitle = createSelector(
@@ -472,19 +484,9 @@ const selectMetadataSource = createSelector(
   (metadata) => metadata.source
 );
 
-const selectMetadataOpengraph = createSelector(
-  [selectMetadata],
-  (metadata) => metadata.opengraph
-);
-
 const selectOpengraphTags = createSelector(
-  [
-    selectMetadataTitle,
-    selectMetadataHomepage,
-    selectMetadataDescription,
-    selectMetadataOpengraph,
-  ],
-  (title, url, description, image) => {
+  [selectMetadataTitle, selectMetadataHomepage, selectMetadataDescription],
+  (title, url, description) => {
     const opengraph = [];
 
     opengraph.push({
@@ -501,28 +503,6 @@ const selectOpengraphTags = createSelector(
       property: "og:description",
       content: description,
     });
-
-    if (image) {
-      opengraph.push({
-        property: "og:image",
-        content: `${url.replace(/\/$/, "")}/${image}`,
-      });
-
-      opengraph.push({
-        property: "og:image:alt",
-        content: description,
-      });
-
-      opengraph.push({
-        property: "og:image:height",
-        content: 630,
-      });
-
-      opengraph.push({
-        property: "og:image:height",
-        content: 1200,
-      });
-    }
 
     return opengraph;
   }
@@ -1070,7 +1050,7 @@ function Page(): React.ReactElement {
       text-decoration-color: cyan;
      }
 
-     a[href*="github"] {
+     .source {
       align-items: center;
       color: deepskyblue;
       display: flex;
@@ -1081,11 +1061,11 @@ function Page(): React.ReactElement {
       text-decoration: none;
      }
 
-     a[href*="github"]:hover {
+     .source:hover {
       text-decoration: underline;
      }
 
-     a[href*="github"] svg {
+     .source svg {
       fill: deepskyblue;
       margin-right: 0.5ch;
       height: 1.4rem;
@@ -1147,7 +1127,7 @@ function Page(): React.ReactElement {
             )}
 
             {source && (
-              <a href={source}>
+              <a href={source} className="source">
                 <svg aria-label="GitHub logo" viewBox="0 0 1024 1024">
                   <path
                     fillRule="evenodd"
@@ -1224,6 +1204,7 @@ function Page(): React.ReactElement {
 
        ${
          command === "serve" &&
+         argv.skipMenu &&
          `
         document.body.dataset.mode = "load"
         request.open("GET", "${cssFilename}")
@@ -1269,9 +1250,9 @@ function runBuild(): Thunk {
 
 function runServer(): Thunk {
   return async (dispatch, getState) => {
-    dispatch(server.actions.start());
+    dispatch(server.actions.start(argv.port));
     const bs = browserSync.create();
-    bs.init({ ...getState().server.options, server: true });
+    bs.init({ ...getState().server.options, server: true, port: argv.port });
     bs.emitter.on("init", () => {
       dispatch(server.actions.online());
     });
@@ -1311,7 +1292,7 @@ function buildPage(): Thunk {
     html = `<!doctype html>${html}`;
     html = html.replace(/ data-reactroot=""/, "");
 
-    fs.writeFileSync("index.html", html);
+    fs.writeFileSync(argv.entrypoint, html);
     dispatch(page.actions.done(html));
   };
 }
@@ -1354,7 +1335,6 @@ const modules: Record<string, string> = {
   $author: "" !default;
   $homepage: "" !default;
   $source: "" !default;
-  $opengraph: "" !default;
 
   body {
    content: updateMetadata((
@@ -1364,7 +1344,6 @@ const modules: Record<string, string> = {
     author: $author,
     homepage: $homepage,
     source: $source,
-    opengraph: $opengraph,
    ));
   }
  `,
