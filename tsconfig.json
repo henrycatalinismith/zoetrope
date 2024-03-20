@@ -4,6 +4,7 @@
   "baseUrl": "./",
   "declaration": true,
   "esModuleInterop": true,
+  "ignoreDeprecations": "5.0",
   "lib": ["esnext"],
   "moduleResolution": "node",
   "module": "commonjs",
