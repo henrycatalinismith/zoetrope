@@ -61,7 +61,7 @@ workflow, so zoetrope pulls all the metadata it needs to build a demo from
 `package.json`.
 Check out the [`package.json` for my doomfire demo][doomfire] for example.
 Most of the values in there are actually used in the built version of the demo
-at [https://hen.cat/doomfire](https://codepen.io/henrycatalinismith/pen/jOrraKw).
+at [https://codepen.io/henrycatalinismith/pen/jOrraKw](https://codepen.io/henrycatalinismith/pen/jOrraKw).
 I'm not going to document the setup process in detail, but if you do want to
 try out zoetrope for yourself then go and browse around that repository for a
 moment.
