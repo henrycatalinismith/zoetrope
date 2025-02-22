@@ -8,13 +8,6 @@
  </strong>
 </p>
 
-<p align="center">
- <img
-  src="https://github.com/henrycatalinismith/zoetrope/actions/workflows/main.yml/badge.svg"
-  alt="Build status"
- />
-</p>
-
 zoetrope is a tool for building CSS demos.
 Imagine something like Codepen, except:
 
