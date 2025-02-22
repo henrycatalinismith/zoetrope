@@ -69,7 +69,7 @@ moment.
 
 ## License
 
-MIT
+[MIT](https://codeberg.org/henrycatalinismith/zoetrope/src/branch/main/license)
 
 [PICO-8]: https://www.lexaloffle.com/pico-8.php
 [doomfire]: https://github.com/henrycatalinismith/doomfire/blob/trunk/package.json
